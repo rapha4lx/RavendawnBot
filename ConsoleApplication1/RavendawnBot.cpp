@@ -7,15 +7,19 @@
 #include <thread>
 
 #include <TlHelp32.h>
+#include <d3d9.h>
+#include <d3dx9tex.h>
+#pragma comment(lib, "d3d9.lib")
+
 #include "Notification/Notification.h"
 #include "ImGui/imgui.h"
 #include "ImGui/imgui_impl_win32.h"
-#include <d3d9.h>
 #include "ImGui/imgui_impl_dx9.h"
 
 #include <nlohmann/json.hpp>
-
 #include <fstream>
+#include <opencv2/opencv.hpp>
+
 
 class Process {
 public:
@@ -29,6 +33,11 @@ public:
 		std::string Pass{ NULL };
 
 		bool logged{ false };
+
+		bool bSyncMovement{ false };
+
+		bool bDebug{ false };
+		std::chrono::steady_clock::time_point lastDebug;
 
 		class CharPerson {
 		public:
@@ -57,7 +66,21 @@ public:
 };
 
 inline std::vector<Process> Clients;
-inline std::vector<DWORD> Keys;
+
+class Movements {
+public:
+	DWORD PID{ NULL };
+
+	bool sysKey{ false };
+	bool keyUp{ false };
+	DWORD key{ NULL };
+
+	bool lClick{ false };
+	bool rClick{ false };
+	POINT position{ NULL };
+};
+
+std::vector<Movements> movements;
 
 
 //HANDLE GetProcessByName(PCSTR name)
@@ -121,7 +144,125 @@ void CleanupDeviceD3D();
 void ResetDevice();
 LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
+
 bool guiWhile{ false };
+
+void onMouse(int event, int x, int y, int flags, void* userdata) {
+	Process* params = static_cast<Process*>(userdata);
+
+	if (event == cv::EVENT_LBUTTONDOWN) {
+		std::cout << "Clique esquerdo detectado em: (" << x << ", " << y << ")" << std::endl;
+		movements.push_back({ params->PID, false, false, NULL, true, false, {x, y} });
+	}
+	else if (event == cv::EVENT_RBUTTONDOWN) {
+		std::cout << "Clique direito detectado em: (" << x << ", " << y << ")" << std::endl;
+		movements.push_back({ params->PID, false, false, NULL, false, true, {x, y} });
+	}
+}
+
+void cvWindows(Process& client) {
+	try
+	{
+		if (client.account.bDebug) {
+			auto currentTime = std::chrono::steady_clock::now();
+			auto elapsedTime = std::chrono::duration_cast<std::chrono::milliseconds>(currentTime - client.account.lastDebug).count();
+
+			if (elapsedTime > 150) {
+
+				RECT rect;
+				GetClientRect(client.hWnd, &rect);
+				int width = rect.right;
+				int height = rect.bottom;
+
+				HDC hdcScreen = GetDC(client.hWnd);
+				HDC hdcMem = CreateCompatibleDC(hdcScreen);
+				HBITMAP hBitmap = CreateCompatibleBitmap(hdcScreen, width, height);
+				SelectObject(hdcMem, hBitmap);
+
+				if (!hdcScreen) {
+					throw std::runtime_error("hdcScreen is null");
+				}
+
+				BitBlt(hdcMem, 0, 0, width, height, hdcScreen, 0, 0, SRCCOPY);
+
+				if (!hdcMem) {
+					throw std::runtime_error("hdcMem is NULL");
+				}
+
+				BITMAPINFOHEADER bi;
+				bi.biSize = sizeof(BITMAPINFOHEADER);
+				bi.biWidth = width;
+				bi.biHeight = -height;
+				bi.biPlanes = 1;
+				bi.biBitCount = 24;
+				bi.biCompression = BI_RGB;
+				bi.biSizeImage = 0;
+				bi.biXPelsPerMeter = 0;
+				bi.biYPelsPerMeter = 0;
+				bi.biClrUsed = 0;
+				bi.biClrImportant = 0;
+
+				cv::Mat screenShot;
+				try
+				{
+					screenShot = cv::Mat(height, width, CV_8UC3);
+				}
+				catch (const cv::Exception&)
+				{
+
+				}
+
+				if (!hBitmap) {
+					throw std::runtime_error("hBitMap is NULL");
+				}
+
+				GetDIBits(hdcScreen, hBitmap, 0, height, screenShot.data, (BITMAPINFO*)&bi, DIB_RGB_COLORS);
+
+				//// Selecionar uma área específica e tamanho
+				//int startX = width / 2 - 200/* coordenada X inicial */;
+				//int startY = height / 2 - 200/* coordenada Y inicial */;
+				//int cropWidth = 600/* largura da área de corte */;
+				//int cropHeight = 400/* altura da área de corte */;
+
+				// Garantir que a área de corte esteja dentro dos limites da imagem
+				/*startX = std::max(0, std::min(startX, width - 1));
+				startY = std::max(0, std::min(startY, height - 1));
+				cropWidth = std::min(cropWidth, width - startX);
+				cropHeight = std::min(cropHeight, height - startY);*/
+
+				// Cortar a área específica
+				//cv::Rect roi(startX, startY, cropWidth, cropHeight);
+				//cv::Mat croppedImage = screenShot(roi).clone();  // Clone para garantir uma cópia independente
+
+				try
+				{
+					cv::namedWindow(client.account.charPerson.Nick, cv::WINDOW_NORMAL);
+					cv::setWindowProperty(client.account.charPerson.Nick, cv::WND_PROP_TOPMOST, 1);
+					cv::imshow(client.account.charPerson.Nick, screenShot);
+					cv::setMouseCallback(client.account.charPerson.Nick, onMouse, &client);
+				}
+				catch (const cv::Exception& e)
+				{
+					std::cerr << "Exceção capturada: " << e.what() << std::endl;
+				}
+
+				DeleteDC(hdcMem);
+				DeleteObject(hBitmap);
+				ReleaseDC(client.hWnd, hdcScreen);
+
+				client.account.lastDebug = std::chrono::steady_clock::now();
+			}
+		}
+		else {
+			//cv::destroyWindow(client.account.charPerson.Nick);
+		}
+	}
+	catch (const std::exception& e)
+	{
+		std::cout << e.what() << std::endl;
+	}
+
+}
 
 void gui() {
 	// Create application window
@@ -159,6 +300,7 @@ void gui() {
 	// Setup Platform/Renderer backends
 	ImGui_ImplWin32_Init(hwnd);
 	ImGui_ImplDX9_Init(g_pd3dDevice);
+
 
 	// Load Fonts
 	// - If no fonts are loaded, dear imgui will use the default font. You can also load multiple fonts and use ImGui::PushFont()/PopFont() to select them.
@@ -241,11 +383,11 @@ void gui() {
 					std::cout << "Login: " << name << " Nick: " << nick << std::endl;
 
 					std::string processName{ "Ravendawn - " + nick };
-					
+
 					Process proces;
-					
+
 					proces.hWnd = FindWindowEx(0, 0, 0, processName.c_str());
-				
+					GetWindowThreadProcessId(proces.hWnd, &proces.PID);
 					proces.account = json["Accounts"][i];
 
 					if (proces.hWnd != NULL) {
@@ -299,7 +441,7 @@ void gui() {
 
 			if (Clients.size()) {
 				for (auto& client : Clients) {
-					ImGui::BeginChild(client.account.Login.c_str(), ImVec2(200, 100)); {
+					ImGui::BeginChild(client.account.Login.c_str(), ImVec2(600, 200)); {
 						ImGui::Text(client.account.Login.c_str());
 						ImVec2 textSize = ImGui::CalcTextSize(client.account.Login.c_str());
 						ImGui::SameLine(textSize.x + 20.20);
@@ -314,11 +456,20 @@ void gui() {
 
 						ImGui::Text(client.account.logged ? "on" : "off");
 
+						if (client.account.logged) {
+							ImGui::Checkbox("bDebug", &client.account.bDebug);
+							ImGui::Checkbox("SyncMovement", &client.account.bSyncMovement);
+						}
 						ImGui::PopStyleColor();
+
+						cvWindows(client);
+
+
+
 					}ImGui::EndChild();
 
 
-					const char* ClientName = GetWindowTitle(client.hWnd);
+					//const char* ClientName = GetWindowTitle(client.hWnd);
 				}
 			}
 
@@ -355,355 +506,290 @@ void gui() {
 	::UnregisterClassW(wc.lpszClassName, wc.hInstance);
 }
 
-LRESULT CALLBACK KeyBoardHook(int nCode, WPARAM wParam, LPARAM lParam) {
-	if (nCode >= 0) {
-		KBDLLHOOKSTRUCT* pKeyInfo = reinterpret_cast<KBDLLHOOKSTRUCT*>(lParam);
+LRESULT CALLBACK LowLevelKeyboardProc(int nCode, WPARAM wParam, LPARAM lParam)
+{
+	KBDLLHOOKSTRUCT* pKeyBoard = (KBDLLHOOKSTRUCT*)lParam;
 
-		Keys.push_back(pKeyInfo->vkCode);
+	HWND hWnd = GetForegroundWindow();
+	DWORD pid;
+	GetWindowThreadProcessId(hWnd, &pid); // Obter o PID associado à janela
+
+	POINT cursorPos{};
+	switch (wParam)
+	{
+	case WM_KEYDOWN:
+	{
+		movements.push_back({ pid, false, false, pKeyBoard->vkCode, false, false, NULL });
+		break;
+
+	case WM_KEYUP:
+		movements.push_back({ pid, false, true, pKeyBoard->vkCode, false, false, NULL });
+		break;
+
+	case WM_SYSKEYDOWN:
+		movements.push_back({ pid, true, false, pKeyBoard->vkCode , false, false, NULL });
+		break;
+
+	case WM_SYSKEYUP:
+		movements.push_back({ pid, true, true, pKeyBoard->vkCode , false, false, NULL });
+		break;
+
+	default:
+		return CallNextHookEx(NULL, nCode, wParam, lParam);
 	}
-	return CallNextHookEx(nullptr, nCode, wParam, lParam);
+	}
+	return 0;
 }
 
-int main(int, char**)
-{
-	std::thread(gui).detach();
+LRESULT CALLBACK LowLevelMouseProc(int nCode, WPARAM wParam, LPARAM lParam) {
+	HWND hWnd = GetForegroundWindow();
+	DWORD pid;
+	GetWindowThreadProcessId(hWnd, &pid); // Obter o PID associado à janela
 
-	HINSTANCE hInstace = GetModuleHandle(nullptr);
-	HHOOK hHook = SetWindowsHookEx(WH_KEYBOARD_LL, KeyBoardHook, hInstace, 0);
+	POINT cursorPos{};
+	switch (wParam)
+	{
+	case WM_LBUTTONDOWN:
+		GetCursorPos(&cursorPos);
+		ScreenToClient(hWnd, &cursorPos);
+		movements.push_back({ pid, false, false, NULL, true, false, cursorPos });
 
+		break;
 
-	MSG msg;
-	while (GetMessage(&msg, nullptr, 0, 0));
+	case WM_RBUTTONDOWN:
+		GetCursorPos(&cursorPos);
+		ScreenToClient(hWnd, &cursorPos);
+		movements.push_back({ pid, false, false, NULL, false, true, cursorPos });
+		break;
 
-
-
-
-	//while (true)
-	//{
-	//	DWORD currentPID{ NULL };
-	//	HWND currentHWND{ NULL };
-	//	currentHWND = GetForegroundWindow();
-	//	GetWindowThreadProcessId(currentHWND, &currentPID);
-
-	//	if (GetAsyncKeyState(VK_CONTROL) < 0) {
-	//		continue;
-	//	}
-
-	//	if (GetAsyncKeyState('W') < 0) {
-	//		for (auto& proces : Clients) {
-	//			if (currentPID == proces.PID) {
-	//				//Sleep(2);
-	//				continue;
-	//			}
-	//			PostMessage(proces.hWnd, WM_KEYDOWN, (char)'W', MAKELPARAM(1, NULL));
-	//			PostMessage(proces.hWnd, WM_KEYUP, (char)'W', MAKELPARAM(1, KF_UP)); //actually not necessary, just good practice
-	//		}
-	//		std::this_thread::sleep_for(std::chrono::milliseconds(150)); // Aguarda um curto per韔do antes de enviar o pr髕imo caractere
-
-	//		std::cout << "KEY PRESSED " << std::endl;
-	//	}
-
-	//	else if (GetAsyncKeyState('A') < 0) {
-	//		for (auto& proces : Clients) {
-	//			if (currentPID == proces.PID) {
-	//				//Sleep(2);
-	//				continue;
-	//			}
-	//			PostMessage(proces.hWnd, WM_KEYDOWN, (char)'A', MAKELPARAM(1, NULL));
-	//			PostMessage(proces.hWnd, WM_KEYUP, (char)'A', MAKELPARAM(1, KF_UP)); //actually not necessary, just good practice
-	//		}
-	//		std::this_thread::sleep_for(std::chrono::milliseconds(150)); // Aguarda um curto per韔do antes de enviar o pr髕imo caractere
-
-	//		std::cout << "KEY PRESSED " << std::endl;
-	//	}
-
-	//	else if (GetAsyncKeyState('S') < 0) {
-	//		for (auto& proces : Clients) {
-	//			if (currentPID == proces.PID) {
-	//				//Sleep(2);
-	//				continue;
-	//			}
-	//			PostMessage(proces.hWnd, WM_KEYDOWN, (char)'S', MAKELPARAM(1, NULL));
-	//			PostMessage(proces.hWnd, WM_KEYUP, (char)'S', MAKELPARAM(1, KF_UP)); //actually not necessary, just good practice
-	//		}
-	//		std::this_thread::sleep_for(std::chrono::milliseconds(150)); // Aguarda um curto per韔do antes de enviar o pr髕imo caractere
-
-	//		std::cout << "KEY PRESSED " << std::endl;
-	//	}
-
-	//	else if (GetAsyncKeyState('D') < 0) {
-	//		for (auto& proces : Clients) {
-	//			if (currentPID == proces.PID) {
-	//				//Sleep(2);
-	//				continue;
-	//			}
-	//			PostMessage(proces.hWnd, WM_KEYDOWN, (char)'D', MAKELPARAM(1, NULL));
-	//			PostMessage(proces.hWnd, WM_KEYUP, (char)'D', MAKELPARAM(1, KF_UP)); //actually not necessary, just good practice
-	//		}
-	//		std::this_thread::sleep_for(std::chrono::milliseconds(150)); // Aguarda um curto per韔do antes de enviar o pr髕imo caractere
-
-	//		//std::cout << "KEY PRESSED " << std::endl;
-	//	}
-
-	//	else if (GetAsyncKeyState('F') < 0) {
-	//		for (auto& proces : Clients) {
-	//			if (currentPID == proces.PID) {
-	//				//Sleep(2);
-	//				continue;
-	//			}
-	//			PostMessage(proces.hWnd, WM_KEYDOWN, (char)'F', MAKELPARAM(1, NULL));
-	//			PostMessage(proces.hWnd, WM_KEYUP, (char)'F', MAKELPARAM(1, KF_UP)); //actually not necessary, just good practice
-	//		}
-	//		std::this_thread::sleep_for(std::chrono::milliseconds(150)); // Aguarda um curto per韔do antes de enviar o pr髕imo caractere
-
-	//		//std::cout << "KEY PRESSED " << std::endl;
-	//	}
-
-	//	else if (GetAsyncKeyState('1') < 0) {
-	//		for (auto& proces : Clients) {
-	//			if (currentPID == proces.PID) {
-	//				//Sleep(2);
-	//				continue;
-	//			}
-	//			PostMessage(proces.hWnd, WM_KEYDOWN, (char)'1', MAKELPARAM(1, NULL));
-	//			PostMessage(proces.hWnd, WM_KEYUP, (char)'1', MAKELPARAM(1, KF_UP)); //actually not necessary, just good practice
-	//		}
-	//		std::this_thread::sleep_for(std::chrono::milliseconds(150)); // Aguarda um curto per韔do antes de enviar o pr髕imo caractere
-
-	//		//std::cout << "KEY PRESSED " << std::endl;
-	//	}
-
-	//	else if (GetAsyncKeyState('2') < 0) {
-	//		for (auto& proces : Clients) {
-	//			if (currentPID == proces.PID) {
-	//				//Sleep(2);
-	//				continue;
-	//			}
-	//			PostMessage(proces.hWnd, WM_KEYDOWN, (char)'2', MAKELPARAM(1, NULL));
-	//			PostMessage(proces.hWnd, WM_KEYUP, (char)'2', MAKELPARAM(1, KF_UP)); //actually not necessary, just good practice
-	//		}
-	//		std::this_thread::sleep_for(std::chrono::milliseconds(150)); // Aguarda um curto per韔do antes de enviar o pr髕imo caractere
-
-	//		//std::cout << "KEY PRESSED " << std::endl;
-	//	}
-
-	//	else if (GetAsyncKeyState('3') < 0) {
-	//		for (auto& proces : Clients) {
-	//			if (currentPID == proces.PID) {
-	//				//Sleep(2);
-	//				continue;
-	//			}
-	//			PostMessage(proces.hWnd, WM_KEYDOWN, (char)'3', MAKELPARAM(1, NULL));
-	//			PostMessage(proces.hWnd, WM_KEYUP, (char)'3', MAKELPARAM(1, KF_UP)); //actually not necessary, just good practice
-	//		}
-	//		std::this_thread::sleep_for(std::chrono::milliseconds(150)); // Aguarda um curto per韔do antes de enviar o pr髕imo caractere
-
-	//		//std::cout << "KEY PRESSED " << std::endl;
-	//	}
-
-	//	else if (GetAsyncKeyState('4') < 0) {
-	//		for (auto& proces : Clients) {
-	//			if (currentPID == proces.PID) {
-	//				//Sleep(2);
-	//				continue;
-	//			}
-	//			PostMessage(proces.hWnd, WM_KEYDOWN, (char)'4', MAKELPARAM(1, NULL));
-	//			PostMessage(proces.hWnd, WM_KEYUP, (char)'4', MAKELPARAM(1, KF_UP)); //actually not necessary, just good practice
-	//		}
-	//		std::this_thread::sleep_for(std::chrono::milliseconds(150)); // Aguarda um curto per韔do antes de enviar o pr髕imo caractere
-
-	//		//std::cout << "KEY PRESSED " << std::endl;
-	//	}
-
-	//	else if (GetAsyncKeyState('5') < 0) {
-	//		for (auto& proces : Clients) {
-	//			if (currentPID == proces.PID) {
-	//				//Sleep(2);
-	//				continue;
-	//			}
-	//			PostMessage(proces.hWnd, WM_KEYDOWN, (char)'5', MAKELPARAM(1, NULL));
-	//			PostMessage(proces.hWnd, WM_KEYUP, (char)'5', MAKELPARAM(1, KF_UP)); //actually not necessary, just good practice
-	//		}
-	//		std::this_thread::sleep_for(std::chrono::milliseconds(150)); // Aguarda um curto per韔do antes de enviar o pr髕imo caractere
-
-	//		//std::cout << "KEY PRESSED " << std::endl;
-	//	}
-
-	//	else if (GetAsyncKeyState('6') < 0) {
-	//		for (auto& proces : Clients) {
-	//			if (currentPID == proces.PID) {
-	//				//Sleep(2);
-	//				continue;
-	//			}
-	//			PostMessage(proces.hWnd, WM_KEYDOWN, (char)'6', MAKELPARAM(1, NULL));
-	//			PostMessage(proces.hWnd, WM_KEYUP, (char)'6', MAKELPARAM(1, KF_UP)); //actually not necessary, just good practice
-	//		}
-	//		std::this_thread::sleep_for(std::chrono::milliseconds(150)); // Aguarda um curto per韔do antes de enviar o pr髕imo caractere
-
-	//		//std::cout << "KEY PRESSED " << std::endl;
-	//	}
-
-	//	else if (GetAsyncKeyState('7') < 0) {
-	//		for (auto& proces : Clients) {
-	//			if (currentPID == proces.PID) {
-	//				//Sleep(2);
-	//				continue;
-	//			}
-	//			PostMessage(proces.hWnd, WM_KEYDOWN, (char)'7', MAKELPARAM(1, NULL));
-	//			PostMessage(proces.hWnd, WM_KEYUP, (char)'7', MAKELPARAM(1, KF_UP)); //actually not necessary, just good practice
-	//		}
-	//		std::this_thread::sleep_for(std::chrono::milliseconds(150)); // Aguarda um curto per韔do antes de enviar o pr髕imo caractere
-
-	//		//std::cout << "KEY PRESSED " << std::endl;
-	//	}
-
-	//	else if (GetAsyncKeyState('8') < 0) {
-	//		for (auto& proces : Clients) {
-	//			if (currentPID == proces.PID) {
-	//				//Sleep(2);
-	//				continue;
-	//			}
-	//			PostMessage(proces.hWnd, WM_KEYDOWN, (char)'8', MAKELPARAM(1, NULL));
-	//			PostMessage(proces.hWnd, WM_KEYUP, (char)'8', MAKELPARAM(1, KF_UP)); //actually not necessary, just good practice
-	//		}
-	//		std::this_thread::sleep_for(std::chrono::milliseconds(150)); // Aguarda um curto per韔do antes de enviar o pr髕imo caractere
-
-	//		//std::cout << "KEY PRESSED " << std::endl;
-	//	}
-
-	//	else if (GetAsyncKeyState('9') < 0) {
-	//		for (auto& proces : Clients) {
-	//			if (currentPID == proces.PID) {
-	//				//Sleep(2);
-	//				continue;
-	//			}
-	//			PostMessage(proces.hWnd, WM_KEYDOWN, (char)'9', MAKELPARAM(1, NULL));
-	//			PostMessage(proces.hWnd, WM_KEYUP, (char)'9', MAKELPARAM(1, KF_UP)); //actually not necessary, just good practice
-	//		}
-	//		std::this_thread::sleep_for(std::chrono::milliseconds(150)); // Aguarda um curto per韔do antes de enviar o pr髕imo caractere
-
-	//		//std::cout << "KEY PRESSED " << std::endl;
-	//	}
-
-	//	else if (GetAsyncKeyState('0') < 0) {
-	//		for (auto& proces : Clients) {
-	//			if (currentPID == proces.PID) {
-	//				//Sleep(2);
-	//				continue;
-	//			}
-	//			PostMessage(proces.hWnd, WM_KEYDOWN, (char)'0', MAKELPARAM(1, NULL));
-	//			PostMessage(proces.hWnd, WM_KEYUP, (char)'0', MAKELPARAM(1, KF_UP)); //actually not necessary, just good practice
-	//		}
-	//		std::this_thread::sleep_for(std::chrono::milliseconds(150)); // Aguarda um curto per韔do antes de enviar o pr髕imo caractere
-
-	//		//std::cout << "KEY PRESSED " << std::endl;
-	//	}
-
-	//	else if (GetAsyncKeyState('-') < 0) {
-	//		for (auto& proces : Clients) {
-	//			if (currentPID == proces.PID) {
-	//				//Sleep(2);
-	//				continue;
-	//			}
-	//			PostMessage(proces.hWnd, WM_KEYDOWN, (char)'-', MAKELPARAM(1, NULL));
-	//			PostMessage(proces.hWnd, WM_KEYUP, (char)'-', MAKELPARAM(1, KF_UP)); //actually not necessary, just good practice
-	//		}
-	//		std::this_thread::sleep_for(std::chrono::milliseconds(150)); // Aguarda um curto per韔do antes de enviar o pr髕imo caractere
-
-	//		//std::cout << "KEY PRESSED " << std::endl;
-	//	}
-
-	//	else if (GetAsyncKeyState('=') < 0) {
-	//		for (auto& proces : Clients) {
-	//			if (currentPID == proces.PID) {
-	//				//Sleep(2);
-	//				continue;
-	//			}
-	//			PostMessage(proces.hWnd, WM_KEYDOWN, (char)'=', MAKELPARAM(1, NULL));
-	//			PostMessage(proces.hWnd, WM_KEYUP, (char)'=', MAKELPARAM(1, KF_UP)); //actually not necessary, just good practice
-	//		}
-	//		std::this_thread::sleep_for(std::chrono::milliseconds(150)); // Aguarda um curto per韔do antes de enviar o pr髕imo caractere
-
-	//		//std::cout << "KEY PRESSED " << std::endl;
-	//	}
-
-	//	else if (GetAsyncKeyState(VK_LBUTTON) < 0) {
-	//		POINT cursorPos{};
-	//		GetCursorPos(&cursorPos);
-
-	//		ScreenToClient(currentHWND, &cursorPos);
-	//		//std::cout << cursorPos.x << " // " << cursorPos.y << std::endl;
-
-	//		RECT windowRect{  };
-	//		GetWindowRect(currentHWND, &windowRect);
-	//		//std::cout << windowRect.left << " // " << windowRect.top << std::endl;
-
-	//		for (auto& proces : Clients) {
-
-	//			if (currentPID == proces.PID) {
-	//				continue;
-	//			}
-
-	//			SendMessage(proces.hWnd, WM_MOUSEMOVE, 0, MAKELPARAM(cursorPos.x, cursorPos.y)); // x e y são as coordenadas do clique
-	//			std::this_thread::sleep_for(std::chrono::milliseconds(100));
-	//			SendMessage(proces.hWnd, WM_LBUTTONDOWN, MK_LBUTTON, 0);
-	//			std::this_thread::sleep_for(std::chrono::milliseconds(20));
-	//			SendMessage(proces.hWnd, WM_LBUTTONUP, MK_LBUTTON, 0);
-	//		}
-	//		std::this_thread::sleep_for(std::chrono::milliseconds(150)); // Aguarda um curto per韔do antes de enviar o pr髕imo caractere
-
-	//		//std::cout << "KEY PRESSED " << std::endl;
-	//	}
-
-	//	else if (GetAsyncKeyState(VK_RBUTTON) < 0) {
-	//		POINT cursorPos{};
-	//		GetCursorPos(&cursorPos);
-
-	//		ScreenToClient(currentHWND, &cursorPos);
-	//		//std::cout << cursorPos.x << " // " << cursorPos.y << std::endl;
-
-	//		RECT windowRect{  };
-	//		GetWindowRect(currentHWND, &windowRect);
-	//		//std::cout << windowRect.left << " // " << windowRect.top << std::endl;
-
-	//		for (auto& proces : Clients) {
-
-	//			if (currentPID == proces.PID) {
-	//				continue;
-	//			}
-
-	//			SendMessage(proces.hWnd, WM_MOUSEMOVE, 0, MAKELPARAM(cursorPos.x, cursorPos.y)); // x e y são as coordenadas do clique
-	//			std::this_thread::sleep_for(std::chrono::milliseconds(100));
-	//			SendMessage(proces.hWnd, WM_RBUTTONDOWN, MK_RBUTTON, 0);
-	//			std::this_thread::sleep_for(std::chrono::milliseconds(20));
-	//			SendMessage(proces.hWnd, WM_RBUTTONUP, MK_RBUTTON, 0);
-	//		}
-	//		std::this_thread::sleep_for(std::chrono::milliseconds(150)); // Aguarda um curto per韔do antes de enviar o pr髕imo caractere
-
-	//		//std::cout << "KEY PRESSED " << std::endl;
-	//	}
-
-	//	else if (GetAsyncKeyState(VK_TAB) < 0) {
-	//		for (auto& proces : Clients) {
-
-	//			if (currentPID == proces.PID) {
-	//				continue;
-	//			}
-
-	//			PostMessage(proces.hWnd, WM_KEYDOWN, 0x09, MAKELPARAM(1, NULL));
-	//			PostMessage(proces.hWnd, WM_KEYUP, 0x09, MAKELPARAM(1, KF_UP)); //actually not necessary, just good practice
-	//		}
-	//	}
-	//}
-
-	UnhookWindowsHookEx(hHook);
+	default:
+		return CallNextHookEx(NULL, nCode, wParam, lParam);
+	}
 
 	return 0;
 }
 
+HHOOK hKeyHook;
+//HHOOK hMouseHook;
 
+DWORD WINAPI KeyLogger(LPVOID lpParameter)
+{
+	HINSTANCE hExe = GetModuleHandle(NULL);
+	if (hExe == NULL)
+	{
+		return 1;
+	}
+	else
+	{
+		hKeyHook = SetWindowsHookEx(WH_KEYBOARD_LL, (HOOKPROC)LowLevelKeyboardProc, hExe, 0);
+		//hMouseHook = SetWindowsHookEx(WH_MOUSE_LL, (HOOKPROC)LowLevelMouseProc, hExe, 0);
+		MSG msg;
+		while (GetMessage(&msg, NULL, 0, 0) != 0)
+		{
+			TranslateMessage(&msg);
+			DispatchMessage(&msg);
+		}
+	}
+	return 0;
+}
 
-// Helper functions
+//DWORD WINAPI MouseLogger(LPVOID lpParameter)
+//{
+//	HHOOK hMouseHook;
+//	HINSTANCE hExe = GetModuleHandle(NULL);
+//	if (hExe == NULL)
+//	{
+//		return 1;
+//	}
+//	else
+//	{
+//		hMouseHook = SetWindowsHookEx(WH_MOUSE_LL, (HOOKPROC)LowLevelMouseProc, hExe, 0);
+//		MSG msg;
+//		while (GetMessage(&msg, NULL, 0, 0) != 0)
+//		{
+//			TranslateMessage(&msg);
+//			DispatchMessage(&msg);
+//		}
+//		UnhookWindowsHookEx(hMouseHook);
+//	}
+//	return 0;
+//}
+
+int StartKeyLogging()
+{
+	HANDLE hThread;
+	DWORD dwThread;
+	hThread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)KeyLogger, NULL, 0, NULL);
+	if (hThread)
+	{
+		return WaitForSingleObject(hThread, IGNORE);
+	}
+	else
+	{
+		return 1;
+	}
+}
+
+bool bDisableAllSync{ false };
+
+int main(int, char**)
+{
+	{
+		if (Clients.size()) {
+			Clients.clear();
+			system("cls");
+		}
+		std::string fileText;
+
+		std::ifstream file_json("C:\\Ravendawn accounts.json");
+		if (!file_json.is_open()) {
+			exit(0);
+		}
+
+		//fileText.assign(std::istreambuf_iterator<char>(file_json), std::istreambuf_iterator<char>());
+
+		nlohmann::json json;
+		try {
+			file_json >> json;
+		}
+		catch (const std::exception& e) {
+			std::cerr << "Erro ao ler o arquivo JSON: " << e.what() << std::endl;
+			return 0;
+		}
+		file_json.close();
+
+		int size = json["Accounts"].size();
+		for (int i = 0; i < size; i++) {
+			std::string name{ json["Accounts"][i]["Login"] };
+			std::string nick{ json["Accounts"][i]["Nick"] };
+			std::cout << "Login: " << name << " Nick: " << nick << std::endl;
+
+			std::string processName{ "Ravendawn - " + nick };
+
+			Process proces;
+
+			proces.hWnd = FindWindowEx(0, 0, 0, processName.c_str());
+			GetWindowThreadProcessId(proces.hWnd, &proces.PID);
+			proces.account = json["Accounts"][i];
+
+			if (proces.hWnd != NULL) {
+				proces.account.logged = true;
+			}
+
+			Clients.push_back(proces);
+		}
+	}
+
+	std::thread(gui).detach();
+
+	StartKeyLogging();
+	//StartCvWindows();
+
+	while (!guiWhile)
+	{
+		if (GetAsyncKeyState(VK_DELETE) < 0) {
+			::PostQuitMessage(0);
+		}
+
+		if (GetAsyncKeyState(VK_PAUSE) < 0) {
+			if (bDisableAllSync) {
+				Beep(1000, 30);
+				bDisableAllSync = false;
+				Sleep(100);
+			}
+			else if (!bDisableAllSync) {
+				Beep(1000, 30);
+				Beep(1000, 30);
+				bDisableAllSync = true;
+				Sleep(100);
+			}
+		}
+
+		for (auto& movement : movements) {
+
+			if (bDisableAllSync) {
+				movements.erase(movements.begin());
+				break;
+			}
+
+			for (auto& client : Clients) {
+				if (!client.account.logged) {
+					std::this_thread::sleep_for(std::chrono::milliseconds(1));
+					continue;
+				}
+
+				if (!client.account.bSyncMovement) {
+					continue;
+				}
+
+				if (GetAsyncKeyState(VK_CAPITAL) < 0) {
+					if (movement.PID != client.PID) {
+						continue;
+					}
+					if (movement.key != NULL) {
+						if (!movement.keyUp) {
+							PostMessage(client.hWnd, WM_KEYDOWN, movement.key, MAKELPARAM(1, KF_REPEAT));
+						}
+						else
+						{
+							PostMessage(client.hWnd, WM_KEYUP, movement.key, 0);
+						}
+						continue;
+					}
+
+					if (movement.lClick) {
+						SendMessage(client.hWnd, WM_MOUSEMOVE, 0, MAKELPARAM(movement.position.x, movement.position.y)); // x e y são as coordenadas do clique
+						std::this_thread::sleep_for(std::chrono::milliseconds(5));
+						SendMessage(client.hWnd, WM_LBUTTONDOWN, MK_LBUTTON, 0);
+						SendMessage(client.hWnd, WM_LBUTTONUP, MK_LBUTTON, 0);
+						continue;
+					}
+
+					if (movement.rClick) {
+						SendMessage(client.hWnd, WM_MOUSEMOVE, 0, MAKELPARAM(movement.position.x, movement.position.y)); // x e y são as coordenadas do clique
+						std::this_thread::sleep_for(std::chrono::milliseconds(5));
+						SendMessage(client.hWnd, WM_RBUTTONDOWN, MK_RBUTTON, 0);
+						SendMessage(client.hWnd, WM_RBUTTONUP, MK_RBUTTON, 0);
+						continue;
+					}
+				}
+
+				if (movement.key != NULL) {
+					if (!movement.keyUp) {
+						PostMessage(client.hWnd, WM_KEYDOWN, movement.key, MAKELPARAM(1, KF_REPEAT));
+					}
+					else
+					{
+						PostMessage(client.hWnd, WM_KEYUP, movement.key, 0);
+					}
+					continue;
+				}
+
+				if (movement.lClick) {
+					SendMessage(client.hWnd, WM_MOUSEMOVE, 0, MAKELPARAM(movement.position.x, movement.position.y)); // x e y são as coordenadas do clique
+					std::this_thread::sleep_for(std::chrono::milliseconds(5));
+					SendMessage(client.hWnd, WM_LBUTTONDOWN, MK_LBUTTON, 0);
+					SendMessage(client.hWnd, WM_LBUTTONUP, MK_LBUTTON, 0);
+					continue;
+				}
+
+				if (movement.rClick) {
+					SendMessage(client.hWnd, WM_MOUSEMOVE, 0, MAKELPARAM(movement.position.x, movement.position.y)); // x e y são as coordenadas do clique
+					std::this_thread::sleep_for(std::chrono::milliseconds(5));
+					SendMessage(client.hWnd, WM_RBUTTONDOWN, MK_RBUTTON, 0);
+					SendMessage(client.hWnd, WM_RBUTTONUP, MK_RBUTTON, 0);
+					continue;
+				}
+			}
+			movements.erase(movements.begin());
+		}
+
+		std::this_thread::sleep_for(std::chrono::milliseconds(1));
+	}
+
+	UnhookWindowsHookEx(hKeyHook);
+	return 0;
+}
 
 bool CreateDeviceD3D(HWND hWnd)
 {
@@ -770,7 +856,8 @@ LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		return 0;
 
 	case WM_CLOSE:
-		exit(0);
+		//exit(0);
+		::PostQuitMessage(0);
 		return 0;
 	}
 	return ::DefWindowProcW(hWnd, msg, wParam, lParam);
