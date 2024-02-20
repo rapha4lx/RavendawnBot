@@ -20,6 +20,8 @@
 #include <fstream>
 #include <opencv2/opencv.hpp>
 
+#include <filesystem>
+
 
 class Process {
 public:
@@ -60,6 +62,8 @@ public:
 			j.at("Nick").get_to(account.charPerson.Nick);
 		}
 
+		bool bAutoAttack{ false };
+
 	};
 
 	Account account;
@@ -75,8 +79,7 @@ public:
 	bool keyUp{ false };
 	DWORD key{ NULL };
 
-	bool lClick{ false };
-	bool rClick{ false };
+	int event{ NULL };
 	POINT position{ NULL };
 };
 
@@ -132,6 +135,108 @@ const char* GetWindowTitle(HWND hwnd) {
 	}
 }
 
+void UpdateAccounts() {
+	if (!std::filesystem::exists("C:\\RavendawnBot")) {
+		std::filesystem::create_directories("C:\\RavendawnBot");
+		//here put a logic for downlaod recognitions files
+	}
+
+	if (!std::filesystem::exists("C:\\RavendawnBot\\accounts")) {
+		std::filesystem::create_directories("C:\\RavendawnBot\\accounts");
+	}
+
+	if (Clients.size()) {
+		Clients.clear();
+		system("cls");
+	}
+	std::string fileText;
+
+	std::ifstream file_json("C:\\Ravendawn accounts.json");
+	if (!file_json.is_open()) {
+		exit(0);
+	}
+
+	nlohmann::json json;
+	try {
+		file_json >> json;
+	}
+	catch (const std::exception& e) {
+		std::cerr << "Erro ao ler o arquivo JSON: " << e.what() << std::endl;
+		return;
+	}
+	file_json.close();
+
+	int size = json["Accounts"].size();
+
+	char* buffer{ nullptr };
+	size_t sz{ 0 };
+	if (_dupenv_s(&buffer, &sz, "USERPROFILE") == 0 && buffer != nullptr)
+	{
+
+	}
+
+	std::string sourceDir{ (std::string)(buffer)+"\\AppData\\Roaming\\Ravendawn\\ravendawn" };
+	for (int i = 0; i < size; i++) {
+		std::string name{ json["Accounts"][i]["Login"] };
+		std::string nick{ json["Accounts"][i]["Nick"] };
+		std::cout << "Login: " << name << " Nick: " << nick << std::endl;
+
+		std::string processName{ "Ravendawn - " + nick };
+
+		Process proces;
+
+		proces.hWnd = FindWindowEx(0, 0, 0, processName.c_str());
+		GetWindowThreadProcessId(proces.hWnd, &proces.PID);
+		proces.account = json["Accounts"][i];
+
+		if (proces.hWnd != NULL) {
+			proces.account.logged = true;
+		}
+
+		Clients.push_back(proces);
+
+		if (!std::filesystem::exists("C:\\RavendawnBot\\accounts\\" + name)) {
+			std::filesystem::create_directory("C:\\RavendawnBot\\accounts\\" + name);
+			std::this_thread::sleep_for(std::chrono::milliseconds(8));
+			for (const auto& entry : std::filesystem::directory_iterator(sourceDir)) {
+				const auto& path = entry.path();
+				if (std::filesystem::is_regular_file(path)) {
+					if (path.filename().extension().string() == ".dll" || path.filename().extension().string() == ".exe") {
+						std::filesystem::copy_file(path, "C:\\RavendawnBot\\accounts\\" + name + "\\" + path.filename().string(), std::filesystem::copy_options::overwrite_existing);
+						std::cout << "Copied: " << path.filename() << std::endl;
+					}
+				}
+			}
+		}
+
+
+	}
+}
+
+void SendText(HWND& hWnd, const std::string& text, bool bEnter)
+{
+	if (bEnter) {
+		PostMessage(hWnd, WM_KEYDOWN, VK_RETURN, MAKELPARAM(1, NULL));
+		PostMessage(hWnd, WM_KEYUP, VK_RETURN, MAKELPARAM(1, KF_UP)); //actually not necessary, just good practice
+		std::this_thread::sleep_for(std::chrono::milliseconds(10)); // Aguarda um curto per韔do antes de enviar o pr髕imo caractere
+	}
+
+	for (char c : text) {
+		SendMessage(hWnd, WM_CHAR, (int)c, 0);
+		std::this_thread::sleep_for(std::chrono::milliseconds(5)); // Aguarda um curto per韔do antes de enviar o pr髕imo caractere
+	}
+
+	if (bEnter) {
+		std::this_thread::sleep_for(std::chrono::milliseconds(30)); // Aguarda um curto per韔do antes de enviar o pr髕imo caractere
+
+		PostMessage(hWnd, WM_KEYDOWN, VK_RETURN, MAKELPARAM(1, NULL));
+		PostMessage(hWnd, WM_KEYUP, VK_RETURN, MAKELPARAM(1, KF_UP)); //actually not necessary, just good practice
+	}
+
+	std::this_thread::sleep_for(std::chrono::milliseconds(100)); // Aguarda um curto per韔do antes de enviar o pr髕imo caractere
+}
+
+
 // Data
 static LPDIRECT3D9              g_pD3D = nullptr;
 static LPDIRECT3DDEVICE9        g_pd3dDevice = nullptr;
@@ -146,122 +251,320 @@ LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 
 bool guiWhile{ false };
-
+POINT lastMousePosition{ NULL };
 void onMouse(int event, int x, int y, int flags, void* userdata) {
 	Process* params = static_cast<Process*>(userdata);
 
-	if (event == cv::EVENT_LBUTTONDOWN) {
-		std::cout << "Clique esquerdo detectado em: (" << x << ", " << y << ")" << std::endl;
-		movements.push_back({ params->PID, false, false, NULL, true, false, {x, y} });
+	switch (event)
+	{
+	case cv::EVENT_LBUTTONDBLCLK: {
+		//std::cout << "Clique esquerdo detectado em: (" << x << ", " << y << ")" << std::endl;
+		movements.push_back({ params->PID, false, false, NULL, event, {x, y} });
+		break;
 	}
-	else if (event == cv::EVENT_RBUTTONDOWN) {
-		std::cout << "Clique direito detectado em: (" << x << ", " << y << ")" << std::endl;
-		movements.push_back({ params->PID, false, false, NULL, false, true, {x, y} });
+
+	case cv::EVENT_LBUTTONDOWN: {
+		//std::cout << "Clique esquerdo detectado em: (" << x << ", " << y << ")" << std::endl;
+		movements.push_back({ params->PID, false, false, NULL, event, {x, y} });
+		break;
+	}
+
+	case cv::EVENT_LBUTTONUP: {
+		//std::cout << "Clique esquerdo detectado em: (" << x << ", " << y << ")" << std::endl;
+		movements.push_back({ params->PID, false, false, NULL, event, {x, y} });
+		break;
+	}
+
+	case cv::EVENT_RBUTTONDBLCLK: {
+		//std::cout << "Clique direito detectado em: (" << x << ", " << y << ")" << std::endl;
+		movements.push_back({ params->PID, false, false, NULL, event, {x, y} });
+		break;
+	}
+
+	case cv::EVENT_MOUSEWHEEL: {
+		if (flags > 0) {
+			//std::cout << "MouseWheel para cima detectado" << std::endl;
+			movements.push_back({ params->PID, false, false, NULL, event, {0, -1} });
+		}
+		else if (flags < 0) {
+			//std::cout << "MouseWheel para baixo detectado" << std::endl;
+			movements.push_back({ params->PID, false, false, NULL, event, {0, 1} });
+		}
+		break;
+	}
+
+	case cv::EVENT_MOUSEMOVE: {
+		if ((x - lastMousePosition.x) > 10 || (x - lastMousePosition.x) < -10) {
+			//std::cout << "Mouse move detectado em: (" << x << ", " << y << ")" << std::endl;
+			movements.push_back({ params->PID, false, false, NULL, event, {x, y} });
+			lastMousePosition = { x, y };
+		}
+		else if ((x - lastMousePosition.x) > 10 || (x - lastMousePosition.x) < -10) {
+			//std::cout << "Mouse move detectado em: (" << x << ", " << y << ")" << std::endl;
+			movements.push_back({ params->PID, false, false, NULL, event, {x, y} });
+			lastMousePosition = { x, y };
+		}
+		break;
+	}
+
+	default:
+		break;
 	}
 }
 
-void cvWindows(Process& client) {
-	try
+std::vector<std::string> Images{/*"C:\\RavendawnBot\\axie icon0.png",
+								"C:\\RavendawnBot\\axie icon1.png",
+								"C:\\RavendawnBot\\axie icon2.png",*/
+								//"C:\\RavendawnBot\\green bar 0.png",
+								//"C:\\RavendawnBot\\green bar 1.png"
+								//"C:\\RavendawnBot\\green bar 2.png",
+								//"C:\\RavendawnBot\\green bar 3.png",
+								"C:\\RavendawnBot\\street.png",
+								"C:\\RavendawnBot\\street2.png",
+								"C:\\RavendawnBot\\street3.png",
+								"C:\\RavendawnBot\\street4.png",
+								"C:\\RavendawnBot\\street5.png",
+								"C:\\RavendawnBot\\street6.png",
+								"C:\\RavendawnBot\\street7.png",
+								"C:\\RavendawnBot\\street8.png"
+};
+
+void cvWindows() {
+	cv::destroyAllWindows();
+	while (!guiWhile)
 	{
-		if (client.account.bDebug) {
-			auto currentTime = std::chrono::steady_clock::now();
-			auto elapsedTime = std::chrono::duration_cast<std::chrono::milliseconds>(currentTime - client.account.lastDebug).count();
+		for (auto& client : Clients) {
 
-			if (elapsedTime > 150) {
+			try
+			{
 
-				RECT rect;
-				GetClientRect(client.hWnd, &rect);
-				int width = rect.right;
-				int height = rect.bottom;
+				if (client.account.bDebug) {
+					//auto currentTime = std::chrono::steady_clock::now();
+					//auto elapsedTime = std::chrono::duration_cast<std::chrono::milliseconds>(currentTime - client.account.lastDebug).count();
 
-				HDC hdcScreen = GetDC(client.hWnd);
-				HDC hdcMem = CreateCompatibleDC(hdcScreen);
-				HBITMAP hBitmap = CreateCompatibleBitmap(hdcScreen, width, height);
-				SelectObject(hdcMem, hBitmap);
+					//if (elapsedTime > 1) {
 
-				if (!hdcScreen) {
-					throw std::runtime_error("hdcScreen is null");
+					RECT rect;
+					GetClientRect(client.hWnd, &rect);
+					int width = rect.right;
+					int height = rect.bottom;
+
+					HDC hdcScreen = GetDC(client.hWnd);
+					if (!hdcScreen) {
+						throw std::runtime_error("Failed to get screen device context (hdcScreen is null)");
+					}
+
+					HDC hdcMem = CreateCompatibleDC(hdcScreen);
+					if (!hdcMem) {
+						ReleaseDC(client.hWnd, hdcScreen); // Liberar hdcScreen antes de lançar a exceção
+						throw std::runtime_error("Failed to create compatible device context (hdcMem is null)");
+					}
+
+					HBITMAP hBitmap = CreateCompatibleBitmap(hdcScreen, width, height);
+					if (!hBitmap) {
+						ReleaseDC(client.hWnd, hdcScreen); // Liberar hdcScreen e hdcMem antes de lançar a exceção
+						DeleteDC(hdcMem);
+						throw std::runtime_error("Failed to create compatible bitmap (hBitmap is null)");
+					}
+
+					SelectObject(hdcMem, hBitmap);
+
+					BitBlt(hdcMem, 0, 0, width, height, hdcScreen, 0, 0, SRCCOPY);
+
+					BITMAPINFOHEADER bi;
+					bi.biSize = sizeof(BITMAPINFOHEADER);
+					bi.biWidth = width;
+					bi.biHeight = -height;
+					bi.biPlanes = 1;
+					bi.biBitCount = 24;
+					bi.biCompression = BI_RGB;
+					bi.biSizeImage = 0;
+					bi.biXPelsPerMeter = 0;
+					bi.biYPelsPerMeter = 0;
+					bi.biClrUsed = 0;
+					bi.biClrImportant = 0;
+
+					cv::Mat screenShot;
+					try
+					{
+						screenShot = cv::Mat(height, width, CV_8UC3);
+					}
+					catch (const cv::Exception& e)
+					{
+						std::cout << e.what() << std::endl;
+						DeleteDC(hdcMem);
+						DeleteObject(hBitmap);
+						ReleaseDC(client.hWnd, hdcScreen);
+					}
+
+					GetDIBits(hdcScreen, hBitmap, 0, height, screenShot.data, (BITMAPINFO*)&bi, DIB_RGB_COLORS);
+
+					//553 255 
+					//727 279
+
+					//int posX = 553;
+					//int posY = 55;
+					//int sizeX = 727 - posX;
+					//int sizeY = 279 - posY;
+
+
+
+					//posX = std::max(0, std::min(posX, width - 1));
+					//posY = std::max(0, std::min(posY, height - 1));
+					//sizeX = std::min(sizeX, width - posX);
+					//sizeY = std::min(sizeY, height - posY);
+
+					//// Cortar a área específica
+					//cv::Rect roi(posX, posY, sizeX, sizeY);
+					//cv::Mat croppedImage = screenShot(roi).clone();  // Clone para garantir uma cópia independente
+
+					//// Selecionar uma área específica e tamanho
+					//int startX = width / 2 - 200/* coordenada X inicial */;
+					//int startY = height / 2 - 200/* coordenada Y inicial */;
+					//int cropWidth = 600/* largura da área de corte */;
+					//int cropHeight = 400/* altura da área de corte */;
+					// Garantir que a área de corte esteja dentro dos limites da imagem
+					/*startX = std::max(0, std::min(startX, width - 1));
+					startY = std::max(0, std::min(startY, height - 1));
+					cropWidth = std::min(cropWidth, width - startX);
+					cropHeight = std::min(cropHeight, height - startY);*/
+					// Cortar a área específica
+					//cv::Rect roi(startX, startY, cropWidth, cropHeight);
+					//cv::Mat croppedImage = screenShot(roi).clone();  // Clone para garantir uma cópia independente
+
+					for (auto& image : Images) {
+						cv::Mat subImage = cv::imread(image);
+
+						// Verifica se a subimagem foi carregada corretamente
+						if (subImage.empty()) {
+							continue;
+						}
+
+						int resultCols = screenShot.cols - subImage.cols + 1;
+						int resultRows = screenShot.rows - subImage.rows + 1;
+						cv::Mat resultImage;
+						try
+						{
+							resultImage = cv::Mat(resultRows, resultCols, CV_32FC1);
+						}
+						catch (const cv::Exception&)
+						{
+							continue;
+						}
+
+						// Realiza a correspondência da subimagem na imagem base
+						cv::matchTemplate(screenShot, subImage, resultImage, cv::TM_CCOEFF_NORMED);
+
+						// Define um limiar para a correspondência
+						//double threshold = 0.6;
+						cv::Mat thresholdedImage;
+						cv::threshold(resultImage, thresholdedImage, 0.3, 1.0, cv::THRESH_TOZERO);
+
+						// Encontra as correspondências com alta confiança
+						std::vector<cv::Point> locations;
+						cv::findNonZero(thresholdedImage, locations);
+
+						//if (locations.size() > 0) {
+						//	//PostMessage(client.hWnd, WM_KEYDOWN, 0x46, 0);
+						//	//std::this_thread::sleep_for(std::chrono::milliseconds(300));
+						//	//PostMessage(client.hWnd, WM_KEYUP, 0x46, 0);
+						//	break;
+						//}
+
+						for (const auto& loc : locations) {
+							cv::rectangle(screenShot, loc, cv::Point(loc.x + subImage.cols, loc.y + subImage.rows), cv::Scalar(0, 255, 0), 2);
+						}
+
+						{
+							//cv::Mat subImage = cv::imread(image);
+
+							//// Verifica se a subimagem foi carregada corretamente
+							//if (subImage.empty()) {
+							//	continue;
+							//}
+
+							//int resultCols = croppedImage.cols - subImage.cols + 1;
+							//int resultRows = croppedImage.rows - subImage.rows + 1;
+							//cv::Mat resultImage;
+							//try
+							//{
+							//	resultImage = cv::Mat(resultRows, resultCols, CV_32FC1);
+							//}
+							//catch (const cv::Exception&)
+							//{
+							//	continue;
+							//}
+
+							//// Realiza a correspondência da subimagem na imagem base
+							//cv::matchTemplate(croppedImage, subImage, resultImage, cv::TM_CCOEFF_NORMED);
+
+							//// Define um limiar para a correspondência
+							////double threshold = 0.6;
+							//cv::Mat thresholdedImage;
+							//cv::threshold(resultImage, thresholdedImage, 0.8, 1.0, cv::THRESH_TOZERO);
+
+							//// Encontra as correspondências com alta confiança
+							//std::vector<cv::Point> locations;
+							//cv::findNonZero(thresholdedImage, locations);
+
+							//if (locations.size() > 0) {
+							//	//PostMessage(client.hWnd, WM_KEYDOWN, 0x46, 0);
+							//	//std::this_thread::sleep_for(std::chrono::milliseconds(300));
+							//	//PostMessage(client.hWnd, WM_KEYUP, 0x46, 0);
+							//	break;
+							//}
+
+							///*for (const auto& loc : locations) {
+							//	cv::rectangle(croppedImage, loc, cv::Point(loc.x + subImage.cols, loc.y + subImage.rows), cv::Scalar(0, 255, 0), 2);
+							//}*/
+
+						}
+					}
+
+
+					try
+					{
+						cv::namedWindow(client.account.charPerson.Nick, cv::WINDOW_NORMAL);
+						//cv::setWindowProperty(client.account.charPerson.Nick, cv::WND_PROP_TOPMOST, 1);
+						cv::imshow(client.account.charPerson.Nick, screenShot);
+						cv::setMouseCallback(client.account.charPerson.Nick, onMouse, &client);
+
+						// Pressione 'q' para sair do loop
+						if (cv::waitKey(1) == 'q') {
+							DeleteDC(hdcMem);
+							DeleteObject(hBitmap);
+							ReleaseDC(client.hWnd, hdcScreen);
+							break;
+						}
+
+					}
+					catch (const cv::Exception& e)
+					{
+						std::cerr << "Exceção capturada: " << e.what() << std::endl;
+						DeleteDC(hdcMem);
+						DeleteObject(hBitmap);
+						ReleaseDC(client.hWnd, hdcScreen);
+					}
+
+					DeleteDC(hdcMem);
+					DeleteObject(hBitmap);
+					ReleaseDC(client.hWnd, hdcScreen);
+
+					client.account.lastDebug = std::chrono::steady_clock::now();
+					//}
 				}
+			}
+			catch (const std::exception& e)
+			{
+				std::cerr << "Exceção capturada: " << e.what() << std::endl;
 
-				BitBlt(hdcMem, 0, 0, width, height, hdcScreen, 0, 0, SRCCOPY);
+			}
+			catch (const cv::Exception& e) {
+				std::cerr << "Exceção capturada: " << e.what() << std::endl;
 
-				if (!hdcMem) {
-					throw std::runtime_error("hdcMem is NULL");
-				}
-
-				BITMAPINFOHEADER bi;
-				bi.biSize = sizeof(BITMAPINFOHEADER);
-				bi.biWidth = width;
-				bi.biHeight = -height;
-				bi.biPlanes = 1;
-				bi.biBitCount = 24;
-				bi.biCompression = BI_RGB;
-				bi.biSizeImage = 0;
-				bi.biXPelsPerMeter = 0;
-				bi.biYPelsPerMeter = 0;
-				bi.biClrUsed = 0;
-				bi.biClrImportant = 0;
-
-				cv::Mat screenShot;
-				try
-				{
-					screenShot = cv::Mat(height, width, CV_8UC3);
-				}
-				catch (const cv::Exception&)
-				{
-
-				}
-
-				if (!hBitmap) {
-					throw std::runtime_error("hBitMap is NULL");
-				}
-
-				GetDIBits(hdcScreen, hBitmap, 0, height, screenShot.data, (BITMAPINFO*)&bi, DIB_RGB_COLORS);
-
-				//// Selecionar uma área específica e tamanho
-				//int startX = width / 2 - 200/* coordenada X inicial */;
-				//int startY = height / 2 - 200/* coordenada Y inicial */;
-				//int cropWidth = 600/* largura da área de corte */;
-				//int cropHeight = 400/* altura da área de corte */;
-
-				// Garantir que a área de corte esteja dentro dos limites da imagem
-				/*startX = std::max(0, std::min(startX, width - 1));
-				startY = std::max(0, std::min(startY, height - 1));
-				cropWidth = std::min(cropWidth, width - startX);
-				cropHeight = std::min(cropHeight, height - startY);*/
-
-				// Cortar a área específica
-				//cv::Rect roi(startX, startY, cropWidth, cropHeight);
-				//cv::Mat croppedImage = screenShot(roi).clone();  // Clone para garantir uma cópia independente
-
-				try
-				{
-					cv::namedWindow(client.account.charPerson.Nick, cv::WINDOW_NORMAL);
-					cv::setWindowProperty(client.account.charPerson.Nick, cv::WND_PROP_TOPMOST, 1);
-					cv::imshow(client.account.charPerson.Nick, screenShot);
-					cv::setMouseCallback(client.account.charPerson.Nick, onMouse, &client);
-				}
-				catch (const cv::Exception& e)
-				{
-					std::cerr << "Exceção capturada: " << e.what() << std::endl;
-				}
-
-				DeleteDC(hdcMem);
-				DeleteObject(hBitmap);
-				ReleaseDC(client.hWnd, hdcScreen);
-
-				client.account.lastDebug = std::chrono::steady_clock::now();
 			}
 		}
-		else {
-			//cv::destroyWindow(client.account.charPerson.Nick);
-		}
 	}
-	catch (const std::exception& e)
-	{
-		std::cout << e.what() << std::endl;
-	}
-
 }
 
 void gui() {
@@ -353,55 +656,8 @@ void gui() {
 		{
 			ImGui::Begin("test ravendawn");
 			if (ImGui::Button("GetWindows")) {
-				if (Clients.size()) {
-					Clients.clear();
-					system("cls");
-				}
-				std::string fileText;
+				UpdateAccounts();
 
-				std::ifstream file_json("C:\\Ravendawn accounts.json");
-				if (!file_json.is_open()) {
-					exit(0);
-				}
-
-				//fileText.assign(std::istreambuf_iterator<char>(file_json), std::istreambuf_iterator<char>());
-
-				nlohmann::json json;
-				try {
-					file_json >> json;
-				}
-				catch (const std::exception& e) {
-					std::cerr << "Erro ao ler o arquivo JSON: " << e.what() << std::endl;
-					return;
-				}
-				file_json.close();
-
-				int size = json["Accounts"].size();
-				for (int i = 0; i < size; i++) {
-					std::string name{ json["Accounts"][i]["Login"] };
-					std::string nick{ json["Accounts"][i]["Nick"] };
-					std::cout << "Login: " << name << " Nick: " << nick << std::endl;
-
-					std::string processName{ "Ravendawn - " + nick };
-
-					Process proces;
-
-					proces.hWnd = FindWindowEx(0, 0, 0, processName.c_str());
-					GetWindowThreadProcessId(proces.hWnd, &proces.PID);
-					proces.account = json["Accounts"][i];
-
-					if (proces.hWnd != NULL) {
-						proces.account.logged = true;
-					}
-
-					Clients.push_back(proces);
-				}
-
-				//Clients.push_back()
-
-
-
-				//GetProcessByName("ravendawn_dx-1708030933.exe");
 			}
 
 			/*if (ImGui::Button("Open Game")) {
@@ -459,10 +715,84 @@ void gui() {
 						if (client.account.logged) {
 							ImGui::Checkbox("bDebug", &client.account.bDebug);
 							ImGui::Checkbox("SyncMovement", &client.account.bSyncMovement);
+							ImGui::Checkbox("AutoAttack", &client.account.bAutoAttack);
+
+							if (client.account.bAutoAttack) {
+								PostMessage(client.hWnd, WM_KEYDOWN, VK_TAB, MAKELPARAM(1, KF_REPEAT));
+								std::this_thread::sleep_for(std::chrono::milliseconds(300));
+								PostMessage(client.hWnd, WM_KEYUP, VK_TAB, 0);
+
+								PostMessage(client.hWnd, WM_KEYDOWN, VK_NUMPAD1, MAKELPARAM(1, KF_REPEAT));
+								std::this_thread::sleep_for(std::chrono::milliseconds(300));
+								PostMessage(client.hWnd, WM_KEYUP, VK_NUMPAD1, 0);
+
+								PostMessage(client.hWnd, WM_KEYDOWN, 0x41, MAKELPARAM(1, KF_REPEAT));
+								std::this_thread::sleep_for(std::chrono::milliseconds(300));
+								PostMessage(client.hWnd, WM_KEYUP, 0x41, 0);
+
+								PostMessage(client.hWnd, WM_KEYDOWN, 0x44, MAKELPARAM(1, KF_REPEAT));
+								std::this_thread::sleep_for(std::chrono::milliseconds(300));
+								PostMessage(client.hWnd, WM_KEYUP, 0x44, 0);
+
+							}
+
+							POINT cursorPos{};
+							GetCursorPos(&cursorPos);
+
+							ScreenToClient(client.hWnd, &cursorPos);
+
+							RECT windowRect{  };
+							GetWindowRect(client.hWnd, &windowRect);
+
+							ImGui::Text("X: %d \\ Y: %d", cursorPos.x, cursorPos.y);
+							ImGui::Text("WindowPosX: %d \\ WindowPosY: %d", windowRect.left, windowRect.top);
+						}
+						else {
+							if (ImGui::Button("Loggin")) {
+								std::string dir{ "C:\\RavendawnBot\\accounts\\" + client.account.Login };
+
+								for (const auto& entry : std::filesystem::directory_iterator(dir)) {
+									const auto& path = entry.path();
+									if (std::filesystem::is_regular_file(path)) {
+										if (path.filename().extension().string() == ".exe") {
+											system(path.string().c_str());
+										}
+									}
+								}
+
+								std::this_thread::sleep_for(std::chrono::seconds(50));
+								//570 244 login input
+								PostMessage(client.hWnd, WM_MOUSEMOVE, 0, MAKELPARAM(570, 244));
+								std::this_thread::sleep_for(std::chrono::milliseconds(5));
+								PostMessage(client.hWnd, WM_LBUTTONDOWN, MK_LBUTTON, 0);
+								PostMessage(client.hWnd, WM_LBUTTONUP, MK_LBUTTON, 0);
+
+								SendText(client.hWnd, client.account.Login, true);
+
+								//599 293 pass input
+								PostMessage(client.hWnd, WM_MOUSEMOVE, 0, MAKELPARAM(599, 293));
+								std::this_thread::sleep_for(std::chrono::milliseconds(5));
+								PostMessage(client.hWnd, WM_LBUTTONDOWN, MK_LBUTTON, 0);
+								PostMessage(client.hWnd, WM_LBUTTONUP, MK_LBUTTON, 0);
+
+								SendText(client.hWnd, client.account.Pass, true);
+
+								//574 488 first server selected
+								PostMessage(client.hWnd, WM_MOUSEMOVE, 0, MAKELPARAM(574, 488));
+								std::this_thread::sleep_for(std::chrono::milliseconds(5));
+								PostMessage(client.hWnd, WM_LBUTTONDOWN, MK_LBUTTON, 0);
+								PostMessage(client.hWnd, WM_LBUTTONUP, MK_LBUTTON, 0);
+
+								//751 601 Enter world
+								PostMessage(client.hWnd, WM_MOUSEMOVE, 0, MAKELPARAM(751, 601));
+								std::this_thread::sleep_for(std::chrono::milliseconds(5));
+								PostMessage(client.hWnd, WM_LBUTTONDOWN, MK_LBUTTON, 0);
+								PostMessage(client.hWnd, WM_LBUTTONUP, MK_LBUTTON, 0);
+							}
 						}
 						ImGui::PopStyleColor();
 
-						cvWindows(client);
+						//cvWindows(client);
 
 
 
@@ -519,19 +849,19 @@ LRESULT CALLBACK LowLevelKeyboardProc(int nCode, WPARAM wParam, LPARAM lParam)
 	{
 	case WM_KEYDOWN:
 	{
-		movements.push_back({ pid, false, false, pKeyBoard->vkCode, false, false, NULL });
+		movements.push_back({ pid, false, false, pKeyBoard->vkCode, 0, NULL });
 		break;
 
 	case WM_KEYUP:
-		movements.push_back({ pid, false, true, pKeyBoard->vkCode, false, false, NULL });
+		movements.push_back({ pid, false, true, pKeyBoard->vkCode, 0, NULL });
 		break;
 
 	case WM_SYSKEYDOWN:
-		movements.push_back({ pid, true, false, pKeyBoard->vkCode , false, false, NULL });
+		movements.push_back({ pid, true, false, pKeyBoard->vkCode, 0, NULL });
 		break;
 
 	case WM_SYSKEYUP:
-		movements.push_back({ pid, true, true, pKeyBoard->vkCode , false, false, NULL });
+		movements.push_back({ pid, true, true, pKeyBoard->vkCode, 0, NULL });
 		break;
 
 	default:
@@ -552,14 +882,14 @@ LRESULT CALLBACK LowLevelMouseProc(int nCode, WPARAM wParam, LPARAM lParam) {
 	case WM_LBUTTONDOWN:
 		GetCursorPos(&cursorPos);
 		ScreenToClient(hWnd, &cursorPos);
-		movements.push_back({ pid, false, false, NULL, true, false, cursorPos });
+		movements.push_back({ pid, false, false, NULL, cv::EVENT_LBUTTONDOWN, cursorPos });
 
 		break;
 
 	case WM_RBUTTONDOWN:
 		GetCursorPos(&cursorPos);
 		ScreenToClient(hWnd, &cursorPos);
-		movements.push_back({ pid, false, false, NULL, false, true, cursorPos });
+		movements.push_back({ pid, false, false, NULL, cv::EVENT_RBUTTONDOWN, cursorPos });
 		break;
 
 	default:
@@ -634,53 +964,9 @@ bool bDisableAllSync{ false };
 
 int main(int, char**)
 {
-	{
-		if (Clients.size()) {
-			Clients.clear();
-			system("cls");
-		}
-		std::string fileText;
-
-		std::ifstream file_json("C:\\Ravendawn accounts.json");
-		if (!file_json.is_open()) {
-			exit(0);
-		}
-
-		//fileText.assign(std::istreambuf_iterator<char>(file_json), std::istreambuf_iterator<char>());
-
-		nlohmann::json json;
-		try {
-			file_json >> json;
-		}
-		catch (const std::exception& e) {
-			std::cerr << "Erro ao ler o arquivo JSON: " << e.what() << std::endl;
-			return 0;
-		}
-		file_json.close();
-
-		int size = json["Accounts"].size();
-		for (int i = 0; i < size; i++) {
-			std::string name{ json["Accounts"][i]["Login"] };
-			std::string nick{ json["Accounts"][i]["Nick"] };
-			std::cout << "Login: " << name << " Nick: " << nick << std::endl;
-
-			std::string processName{ "Ravendawn - " + nick };
-
-			Process proces;
-
-			proces.hWnd = FindWindowEx(0, 0, 0, processName.c_str());
-			GetWindowThreadProcessId(proces.hWnd, &proces.PID);
-			proces.account = json["Accounts"][i];
-
-			if (proces.hWnd != NULL) {
-				proces.account.logged = true;
-			}
-
-			Clients.push_back(proces);
-		}
-	}
-
+	UpdateAccounts();
 	std::thread(gui).detach();
+	std::thread(cvWindows).detach();
 
 	StartKeyLogging();
 	//StartCvWindows();
@@ -714,7 +1000,7 @@ int main(int, char**)
 
 			for (auto& client : Clients) {
 				if (!client.account.logged) {
-					std::this_thread::sleep_for(std::chrono::milliseconds(1));
+					//std::this_thread::sleep_for(std::chrono::milliseconds(1));
 					continue;
 				}
 
@@ -726,9 +1012,10 @@ int main(int, char**)
 					if (movement.PID != client.PID) {
 						continue;
 					}
+
 					if (movement.key != NULL) {
 						if (!movement.keyUp) {
-							PostMessage(client.hWnd, WM_KEYDOWN, movement.key, MAKELPARAM(1, KF_REPEAT));
+							PostMessage(client.hWnd, WM_KEYDOWN, movement.key, 0);
 						}
 						else
 						{
@@ -737,26 +1024,58 @@ int main(int, char**)
 						continue;
 					}
 
-					if (movement.lClick) {
+					switch (movement.event)
+					{
+					case cv::EVENT_LBUTTONDBLCLK: {
 						SendMessage(client.hWnd, WM_MOUSEMOVE, 0, MAKELPARAM(movement.position.x, movement.position.y)); // x e y são as coordenadas do clique
-						std::this_thread::sleep_for(std::chrono::milliseconds(5));
+						std::this_thread::sleep_for(std::chrono::milliseconds(3));
 						SendMessage(client.hWnd, WM_LBUTTONDOWN, MK_LBUTTON, 0);
 						SendMessage(client.hWnd, WM_LBUTTONUP, MK_LBUTTON, 0);
-						continue;
+						break;
 					}
 
-					if (movement.rClick) {
+					case cv::EVENT_LBUTTONDOWN: {
+						SendMessage(client.hWnd, WM_LBUTTONDOWN, MK_LBUTTON, 0);
+						break;
+					}
+
+					case cv::EVENT_LBUTTONUP: {
+						SendMessage(client.hWnd, WM_LBUTTONUP, MK_LBUTTON, 0);
+						break;
+					}
+
+					case cv::EVENT_RBUTTONDOWN: {
 						SendMessage(client.hWnd, WM_MOUSEMOVE, 0, MAKELPARAM(movement.position.x, movement.position.y)); // x e y são as coordenadas do clique
-						std::this_thread::sleep_for(std::chrono::milliseconds(5));
+						std::this_thread::sleep_for(std::chrono::milliseconds(3));
 						SendMessage(client.hWnd, WM_RBUTTONDOWN, MK_RBUTTON, 0);
 						SendMessage(client.hWnd, WM_RBUTTONUP, MK_RBUTTON, 0);
-						continue;
+						break;
+					}
+
+					case cv::EVENT_MOUSEMOVE: {
+						SendMessage(client.hWnd, WM_MOUSEMOVE, 0, MAKELPARAM(movement.position.x, movement.position.y)); // x e y são as coordenadas do clique
+						std::this_thread::sleep_for(std::chrono::milliseconds(2));
+						break;
+					}
+
+					case cv::EVENT_MOUSEWHEEL: {
+						if (movement.position.y > 0) {
+							SendMessage(client.hWnd, WM_MOUSEWHEEL, MAKEWPARAM(0, -WHEEL_DELTA), NULL);
+						}
+						else if (movement.position.y < 0) {
+							SendMessage(client.hWnd, WM_MOUSEWHEEL, MAKEWPARAM(0, WHEEL_DELTA), NULL);
+						}
+						break;
+					}
+
+					default:
+						break;
 					}
 				}
 
 				if (movement.key != NULL) {
 					if (!movement.keyUp) {
-						PostMessage(client.hWnd, WM_KEYDOWN, movement.key, MAKELPARAM(1, KF_REPEAT));
+						PostMessage(client.hWnd, WM_KEYDOWN, movement.key, 0);
 					}
 					else
 					{
@@ -765,26 +1084,58 @@ int main(int, char**)
 					continue;
 				}
 
-				if (movement.lClick) {
+				switch (movement.event)
+				{
+				case cv::EVENT_LBUTTONDBLCLK: {
 					SendMessage(client.hWnd, WM_MOUSEMOVE, 0, MAKELPARAM(movement.position.x, movement.position.y)); // x e y são as coordenadas do clique
-					std::this_thread::sleep_for(std::chrono::milliseconds(5));
+					std::this_thread::sleep_for(std::chrono::milliseconds(3));
 					SendMessage(client.hWnd, WM_LBUTTONDOWN, MK_LBUTTON, 0);
 					SendMessage(client.hWnd, WM_LBUTTONUP, MK_LBUTTON, 0);
-					continue;
+					break;
 				}
 
-				if (movement.rClick) {
+				case cv::EVENT_LBUTTONDOWN: {
+					SendMessage(client.hWnd, WM_LBUTTONDOWN, MK_LBUTTON, 0);
+					break;
+				}
+
+				case cv::EVENT_LBUTTONUP: {
+					SendMessage(client.hWnd, WM_LBUTTONUP, MK_LBUTTON, 0);
+					break;
+				}
+
+				case cv::EVENT_RBUTTONDOWN: {
 					SendMessage(client.hWnd, WM_MOUSEMOVE, 0, MAKELPARAM(movement.position.x, movement.position.y)); // x e y são as coordenadas do clique
-					std::this_thread::sleep_for(std::chrono::milliseconds(5));
+					std::this_thread::sleep_for(std::chrono::milliseconds(3));
 					SendMessage(client.hWnd, WM_RBUTTONDOWN, MK_RBUTTON, 0);
 					SendMessage(client.hWnd, WM_RBUTTONUP, MK_RBUTTON, 0);
-					continue;
+					break;
+				}
+
+				case cv::EVENT_MOUSEMOVE: {
+					SendMessage(client.hWnd, WM_MOUSEMOVE, 0, MAKELPARAM(movement.position.x, movement.position.y)); // x e y são as coordenadas do clique
+					std::this_thread::sleep_for(std::chrono::milliseconds(2));
+					break;
+				}
+
+				case cv::EVENT_MOUSEWHEEL: {
+					if (movement.position.y > 0) {
+						SendMessage(client.hWnd, WM_MOUSEWHEEL, MAKEWPARAM(0, -WHEEL_DELTA), NULL);
+					}
+					else if (movement.position.y < 0) {
+						SendMessage(client.hWnd, WM_MOUSEWHEEL, MAKEWPARAM(0, WHEEL_DELTA), NULL);
+					}
+					break;
+				}
+
+				default:
+					break;
 				}
 			}
 			movements.erase(movements.begin());
 		}
 
-		std::this_thread::sleep_for(std::chrono::milliseconds(1));
+		//std::this_thread::sleep_for(std::chrono::milliseconds(1));
 	}
 
 	UnhookWindowsHookEx(hKeyHook);
