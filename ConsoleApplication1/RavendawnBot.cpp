@@ -208,36 +208,40 @@ void onMouse(int event, int x, int y, int flags, void* userdata) {
 	{
 	case cv::EVENT_LBUTTONDBLCLK: {
 		//std::cout << "Clique esquerdo detectado em: (" << x << ", " << y << ")" << std::endl;
-		movements.push_back({ params->PID, false, false, NULL, event, {x, y} });
+		//movements.push_back({ params->PID, false, false, NULL, event, {x, y} });
 		break;
 	}
 
 	case cv::EVENT_LBUTTONDOWN: {
 		//std::cout << "Clique esquerdo detectado em: (" << x << ", " << y << ")" << std::endl;
-		movements.push_back({ params->PID, false, false, NULL, event, {x, y} });
+		//movements.push_back({ params->PID, false, false, NULL, event, {x, y} });
+		SendMessage(params->hWnd, WM_MOUSEMOVE, 0, MAKELPARAM(x, y)); // x e y são as coordenadas do clique
+		std::this_thread::sleep_for(std::chrono::milliseconds(300));
+		SendMessage(params->hWnd, WM_LBUTTONDOWN, MK_LBUTTON, 0);
+		SendMessage(params->hWnd, WM_LBUTTONUP, MK_LBUTTON, 0);
 		break;
 	}
 
 	case cv::EVENT_LBUTTONUP: {
 		//std::cout << "Clique esquerdo detectado em: (" << x << ", " << y << ")" << std::endl;
-		movements.push_back({ params->PID, false, false, NULL, event, {x, y} });
+		//movements.push_back({ params->PID, false, false, NULL, event, {x, y} });
 		break;
 	}
 
 	case cv::EVENT_RBUTTONDBLCLK: {
 		//std::cout << "Clique direito detectado em: (" << x << ", " << y << ")" << std::endl;
-		movements.push_back({ params->PID, false, false, NULL, event, {x, y} });
+		//movements.push_back({ params->PID, false, false, NULL, event, {x, y} });
 		break;
 	}
 
 	case cv::EVENT_MOUSEWHEEL: {
 		if (flags > 0) {
 			//std::cout << "MouseWheel para cima detectado" << std::endl;
-			movements.push_back({ params->PID, false, false, NULL, event, {0, -1} });
+			//movements.push_back({ params->PID, false, false, NULL, event, {0, -1} });
 		}
 		else if (flags < 0) {
 			//std::cout << "MouseWheel para baixo detectado" << std::endl;
-			movements.push_back({ params->PID, false, false, NULL, event, {0, 1} });
+			//movements.push_back({ params->PID, false, false, NULL, event, {0, 1} });
 		}
 		break;
 	}
@@ -245,13 +249,13 @@ void onMouse(int event, int x, int y, int flags, void* userdata) {
 	case cv::EVENT_MOUSEMOVE: {
 		if ((x - lastMousePosition.x) > 10 || (x - lastMousePosition.x) < -10) {
 			//std::cout << "Mouse move detectado em: (" << x << ", " << y << ")" << std::endl;
-			movements.push_back({ params->PID, false, false, NULL, event, {x, y} });
-			lastMousePosition = { x, y };
+			/*movements.push_back({ params->PID, false, false, NULL, event, {x, y} });
+			lastMousePosition = { x, y };*/
 		}
 		else if ((x - lastMousePosition.x) > 10 || (x - lastMousePosition.x) < -10) {
 			//std::cout << "Mouse move detectado em: (" << x << ", " << y << ")" << std::endl;
-			movements.push_back({ params->PID, false, false, NULL, event, {x, y} });
-			lastMousePosition = { x, y };
+			/*movements.push_back({ params->PID, false, false, NULL, event, {x, y} });
+			lastMousePosition = { x, y };*/
 		}
 		break;
 	}
@@ -366,6 +370,17 @@ void cvWindows() {
 	}
 }
 
+void ListarArquivos(const std::string& pasta, Client& client, MapperType FarmType) {
+	for (const auto& entry : std::filesystem::directory_iterator(pasta)) {
+		if (std::filesystem::is_regular_file(entry)) {
+			std::string nomeArquivo = entry.path().stem().string();
+			if (ImGui::MenuItem(nomeArquivo.c_str())) {
+				client.LoadWaipointConfig(nomeArquivo.c_str(), FarmType);
+			}
+		}
+	}
+}
+
 static int imgPoint{ 0 };
 
 void gui() {
@@ -458,7 +473,6 @@ void gui() {
 			ImGui::Begin("test ravendawn");
 			if (ImGui::Button("GetWindows")) {
 				UpdateAccounts();
-
 			}
 
 			/*if (ImGui::Button("Open Game")) {
@@ -475,16 +489,25 @@ void gui() {
 			}
 
 			if (ImGui::BeginPopup("Menu Popup")) {
+				static char	Nick[32];
+				static char	Email[125];
+				static char	Pass[30];
+				static char	Login[32];
+
+				ImGui::InputText("Nick", Nick, IM_ARRAYSIZE(Nick));
+				ImGui::InputText("Email", Email, IM_ARRAYSIZE(Email));
+				ImGui::InputText("Pass", Pass, IM_ARRAYSIZE(Pass));
+				ImGui::InputText("Login", Login, IM_ARRAYSIZE(Login));
 
 				if (ImGui::MenuItem("Add account")) {
 					std::ofstream json_account("C:\\Ravendawn accounts.json");
 
 					Client account;
 
-					account.charPerson.Nick = "Rapha4lx";
-					account.Email = "rapha4lx@gmail.com";
-					account.Pass = "33165201r";
-					account.Login = "rapha4lx";
+					account.charPerson.Nick = Nick;
+					account.Email = Email;
+					account.Pass = Pass;
+					account.Login = Login;
 
 					nlohmann::json json;
 					json["Accounts"].push_back(account);
@@ -520,15 +543,31 @@ void gui() {
 
 
 							if (!client.bAutoFishing) {
-								if (ImGui::Checkbox("Auto AutoFishing", &client.bAutoFishing)) {
-									ClientsFarm.push_back(&client);
-									client.bAutoFishing = true;
+								if (ImGui::Button("Auto Fishing")) {
+									client.bAutoFishingPopup = true;
+								}
+
+								if (client.bAutoFishingPopup) {
+									ImGui::OpenPopup("AutoFishing Popup");
+									client.bAutoFishingPopup = false;
+								}
+
+								if (ImGui::BeginPopup("AutoFishing Popup")) {
+									ImGui::Checkbox("Fishi Auto Move", &client.bFishingAutoMove);
+
+									ListarArquivos("C:\\RavendawnBot\\Farms\\Fishi",client, MapperType::Fishi);
+									
+									if (ImGui::Button("Start AutoFishing")) {
+										client.bAutoFishing = true;
+										ClientsFarm.push_back(&client);
+									}
+
+									ImGui::EndPopup();
 								}
 							}
 							else
 							{
-
-								if (ImGui::Button("Move Up")) {
+								/*if (ImGui::Button("Move Up")) {
 									client.findFishingPos = FindPos::up;
 								}
 								ImGui::SameLine();
@@ -542,7 +581,7 @@ void gui() {
 								ImGui::SameLine();
 								if (ImGui::Button("Move right")) {
 									client.findFishingPos = FindPos::right;
-								}
+								}*/
 
 								if (ImGui::Button("Stop AutoFishing")) {
 									auto it = std::find_if(ClientsFarm.begin(), ClientsFarm.end(), [client](const Client* obj) {
@@ -550,9 +589,10 @@ void gui() {
 										});
 									ClientsFarm.erase(it);
 									client.bAutoFishing = false;
+									client.bFishingAutoMove = false;
+									client.bAutoFishingPopup = false;
 								}
 							}
-
 
 							if (!client.bAutoTask) {
 								if (ImGui::Checkbox("Auto Task", &client.bAutoTask)) {
@@ -589,9 +629,22 @@ void gui() {
 							}
 
 							if (!client.bWoodFarm) {
-								if (ImGui::Checkbox("Farm Wood", &client.bWoodFarm)) {
-									ClientsFarm.push_back(&client);
-									client.bWoodFarm = true;
+								if (ImGui::Button("Farm Wood")) {
+									client.bAutoWoodFarmPopup = true;
+								}
+
+								if (client.bAutoWoodFarmPopup) {
+									ImGui::OpenPopup("Auto Farm Wood");
+									client.bAutoWoodFarmPopup = false;
+								}
+
+								if (ImGui::BeginPopup("Auto Farm Wood")) {
+									ListarArquivos("C:\\RavendawnBot\\Farms\\Wood", client, MapperType::Wood);
+									if (ImGui::Button("Start Farm Wood")) {
+										client.bWoodFarm = true;
+										ClientsFarm.push_back(&client);
+									}
+									ImGui::EndPopup();
 								}
 							}
 							else
@@ -602,6 +655,7 @@ void gui() {
 										});
 									ClientsFarm.erase(it);
 									client.bWoodFarm = false;
+									client.bAutoWoodFarmPopup = false;
 								}
 							}
 
@@ -613,7 +667,7 @@ void gui() {
 							RECT windowRect{  };
 							GetWindowRect(client.hWnd, &windowRect);
 
-							ImGui::Text("X: %d \\ Y: %d", cursorPos.x, cursorPos.y);
+							ImGui::Text("X: %d \\ Y: %d", cursorPos.x /*- windowRect.right / 2*/, cursorPos.y /*- windowRect.bottom / 2*/);
 							ImGui::Text("WindowPosX: %d \\ WindowPosY: %d", windowRect.left, windowRect.top);
 							ImGui::Text("life: %d ", client.read<int>(client.LocalPlayer + 0xDDC));
 							ImGui::Text("Player Position: X:%d Y:%d Z:%d",
@@ -910,14 +964,26 @@ void gui() {
 
 							}
 
+
+							if (client.fishingWaipont.size())
+								ImGui::Text("FishingIndex: %d \\ FishingPos: X:%d  Y:%d", client.fishingIndex, client.fishingWaipont[client.fishingIndex].Pos.x, client.fishingWaipont[client.fishingIndex].Pos.y);
 							ImGui::Combo("MapperType", &mapperIndex, mapperTypeIndex, IM_ARRAYSIZE(mapperTypeIndex));
 
+							if (ImGui::Button("Clear")) {
+								mapper.waipoint.clear();
+							}
+
+							ImGui::SameLine();
+
 							if (ImGui::Button("Add")) {
-								Mapper::Waipoint map;
+								mapper.maxIndex++;
+								Waipoint map;
 								map.Pos = Vector3(
 									client.read<int>(client.BaseAddress + 0x27CCC1C),
 									client.read<int>(client.BaseAddress + 0x27CCC20),
 									client.read<int>(client.BaseAddress + 0x27CC498));
+
+								map.index = mapper.maxIndex;
 
 								switch (mapperIndex)
 								{
@@ -945,26 +1011,80 @@ void gui() {
 									break;
 								}
 
-								mapper.waipoint .push_back(map);
+								mapper.waipoint.push_back(map);
 							}
-							
+
 							ImGui::SameLine();
 
 							if (ImGui::Button("Save")) {
-								std::ofstream json_account("C:\\RavendawnBot\\accounts\\mapper.json");
+								client.bShowSavePopup = true;
+							}
 
-								nlohmann::json json;
-								json = mapper.waipoint;
-								json_account << std::setw(4) << json << std::endl;
+							if (client.bShowSavePopup) {
+								ImGui::OpenPopup("Save Popup");
+								client.bShowSavePopup = false;
+							}
 
-								json_account.close();
+							if (ImGui::BeginPopup("Save Popup")) {
+								static char	Filename[120];
+								static int FarmType{ 0 };
+
+								ImGui::InputText("File Name", Filename, IM_ARRAYSIZE(Filename));
+								ImGui::Combo("Farm Type", &FarmType, mapperTypeIndex, IM_ARRAYSIZE(mapperTypeIndex));
+
+								if (ImGui::Button("Save")) {
+
+									std::string file{ Filename };
+									std::string FarmTypeFile{};
+									switch (FarmType)
+									{
+									case 0:
+									case 1: {
+										FarmTypeFile = "Wood";
+										break;
+									}
+									case 2:
+									case 3: {
+										FarmTypeFile = "Fishi";
+									}
+									default:
+										break;
+									}
+									std::ofstream json_account("C:\\RavendawnBot\\Farms\\" + FarmTypeFile + "\\" + file + ".json");
+
+									nlohmann::json json;
+									json = mapper.waipoint;
+									json_account << std::setw(4) << json << std::endl;
+
+									json_account.close();
+								}
+
+								ImGui::EndPopup();
 							}
 
 							for (auto& mapper_ : mapper.waipoint) {
-								if (!(mapper_.mapperType == mapperIndex || mapper_.mapperType == MapperType::npc)) {
-									continue;
+								switch (mapperIndex)
+								{
+								case 0:
+								case 1: {
+									if ((mapper_.mapperType == MapperType::Fishi || mapper_.mapperType == MapperType::WalkFishi)) {
+										continue;
+									}
+									break;
 								}
 
+								case 2:
+								case 3: {
+									if ((mapper_.mapperType == MapperType::WalkWood || mapper_.mapperType == MapperType::Wood)) {
+										continue;
+									}
+									break;
+								}
+
+								default:
+									break;
+								}
+								
 								std::string typ;
 								switch (mapper_.mapperType)
 								{
@@ -992,7 +1112,7 @@ void gui() {
 									break;
 								}
 
-								ImGui::Text("MapperType: %s MapperXYZ: %d %d %d", typ, mapper_.Pos.x, mapper_.Pos.y, mapper_.Pos.z);
+								ImGui::Text("MapperType: %s MapperXYZ: %d %d %d", typ.c_str(), mapper_.Pos.x, mapper_.Pos.y, mapper_.Pos.z);
 								//ImGui::SameLine();
 							}
 						}
@@ -1215,7 +1335,6 @@ bool bDisableAllSync{ false };
 
 int main(int, char**)
 {
-	mapper.Start();
 	UpdateAccounts();
 	std::thread(gui).detach();
 	std::thread(cvWindows).detach();
