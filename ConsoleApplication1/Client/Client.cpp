@@ -4,6 +4,8 @@
 #include "../Notification/Notification.h"
 #include <psapi.h>
 
+#include <fstream>
+
 ULONG GetProcessBaseAddress(HANDLE& hProcess, HMODULE* phmod);
 
 int random(int low, int high) {
@@ -12,6 +14,7 @@ int random(int low, int high) {
 
 void Client::DisableAllFarmsFunctions() {
 	this->bAutoFishing = false;
+	this->bFishingAutoMove = false;
 	this->bAutoTask = false;
 	this->bWoodFarm = false;
 	this->bAutoAttack = false;
@@ -140,77 +143,229 @@ void Client::AutoAttack() {
 
 }
 
+void Client::NextFishingPosition() {
+	if (this->bFishingIncreseDecreseIndex) {
+		this->fishingIndex++;
+		if (this->fishingIndex > this->fishingWaipont.size() - 1) {
+			this->bFishingIncreseDecreseIndex = false;
+			this->fishingIndex--;
+		}
+	}
+	else {
+		this->fishingIndex--;
+		if (this->fishingIndex == -1) {
+			this->bFishingIncreseDecreseIndex = true;
+			this->fishingIndex++;
+		}
+	}
+}
+
 void Client::AutoFishing() {
-	auto currentTime{ std::chrono::steady_clock::now() };
-	auto elapseTime{ std::chrono::duration_cast<std::chrono::seconds>(currentTime - this->lastFishingMovement).count() };
-	auto firstHabilitTime{ std::chrono::duration_cast<std::chrono::seconds>(currentTime - this->lastFishingHabilit).count() };
+	Vector3 playerPos{
+		this->read<int>(this->BaseAddress + 0x27CCC1C),
+		this->read<int>(this->BaseAddress + 0x27CCC20),
+		this->read<int>(this->BaseAddress + 0x27CC498)
+	};
 
+	if (!this->fishingWaipont.size()) {
+		this->fishingWaipont = mapper.waipoint;
+		findNearest(this->fishingWaipont, playerPos, MapperType::Fishi);
+	}
 
-	if (elapseTime < 1) {
+	for (; this->fishingWaipont[this->fishingIndex].mapperType == MapperType::npc;)
+	{
+		if (!(this->fishingWaipont[this->fishingIndex].Pos.x == playerPos.x
+			&& this->fishingWaipont[this->fishingIndex].Pos.y == playerPos.y)) {
+			break;
+		}
+
+		if (Recognition::CustomRecognition(this->hWnd, /*1146, 669, 1120 - 11146, 703 - 669,*/ ImageType::sellButton, 0.7, true)) {
+			for (; Recognition::CustomRecognition(this->hWnd, /*1146, 669, 1120 - 11146, 703 - 669,*/ ImageType::sellButton, 0.7, true);) {
+				PostMessage(this->hWnd, WM_MOUSEMOVE, 0, MAKELPARAM(1158, 689));
+				std::this_thread::sleep_for(std::chrono::milliseconds(5));
+				PostMessage(this->hWnd, WM_LBUTTONDOWN, MK_LBUTTON, 0);
+				PostMessage(this->hWnd, WM_LBUTTONUP, MK_LBUTTON, 0);
+
+				PostMessage(this->hWnd, WM_MOUSEMOVE, 0, MAKELPARAM(10, 10));
+				std::this_thread::sleep_for(std::chrono::milliseconds(20));
+
+			}
+
+			this->NextFishingPosition();
+			return;
+		}
+
+		if (Recognition::CustomRecognition(this->hWnd, /*931, 189, 1178 - 931, 225 - 189,*/ ImageType::sellText, 0.7, true)) {
+			PostMessage(this->hWnd, WM_MOUSEMOVE, 0, MAKELPARAM(1034, 209));
+			std::this_thread::sleep_for(std::chrono::milliseconds(5));
+			PostMessage(this->hWnd, WM_LBUTTONDOWN, MK_LBUTTON, 0);
+			PostMessage(this->hWnd, WM_LBUTTONUP, MK_LBUTTON, 0);
+
+			std::this_thread::sleep_for(std::chrono::milliseconds(5));
+			PostMessage(this->hWnd, WM_MOUSEMOVE, 0, MAKELPARAM(10, 10));
+
+			if (Recognition::CustomRecognition(this->hWnd, /*66, 414, 342 - 66, 473 - 414,*/ ImageType::failSellText, 0.7, true)) {
+				this->NextFishingPosition();
+				return;
+			}
+
+			return;
+		}
+		else
+		{
+			//SetForegroundWindow(this->hWnd);
+			PostMessage(this->hWnd, WM_KEYDOWN, 0x46, MAKELPARAM(1, KF_REPEAT));
+			std::this_thread::sleep_for(std::chrono::milliseconds(300));
+			PostMessage(this->hWnd, WM_KEYUP, 0x46, 0);
+			return;
+		}
+
 		return;
 	}
 
-	if (Recognition::CustomRecognition(this->hWnd, ImageType::fishingRood, 0.6, false)) {
-		if (firstHabilitTime > 4) {
-			PostMessage(this->hWnd, WM_KEYDOWN, VK_NUMPAD1, 0);
+	//if (Recognition::CustomRecognition(this->hWnd, 1202, 555, 1258 - 1202, 599 - 555, ImageType::cleanSlotInv, 0.1)) {
+	//	this->bFishingIncreseDecreseIndex = false;
+	//}
+
+	auto currentTime{ std::chrono::steady_clock::now() };
+	auto elapseTime{ std::chrono::duration_cast<std::chrono::seconds>(currentTime - this->lastFishingMovement).count() };
+	auto firstHabilitTime{ std::chrono::duration_cast<std::chrono::seconds>(currentTime - this->lastFirstFishingHabilit).count() };
+	auto thirtHabilitTime{ std::chrono::duration_cast<std::chrono::seconds>(currentTime - this->lastThirtFishingHabilit).count() };
+	auto FishingHabilitsCooldown{ std::chrono::duration_cast<std::chrono::seconds>(currentTime - this->FishingHabilitsCooldown).count() };
+
+	if (Recognition::CustomRecognition(this->hWnd, ImageType::fishingRood, 0.7, true)) {
+		if (FishingHabilitsCooldown < 4.2) {
+			return;
+		}
+
+		if (firstHabilitTime > 4.2) {
+			if (this->fishingFirstHabilitCount < 2) {
+				PostMessage(this->hWnd, WM_KEYDOWN, VK_NUMPAD1, 0);
+				std::this_thread::sleep_for(std::chrono::milliseconds(300));
+				PostMessage(this->hWnd, WM_KEYUP, VK_NUMPAD1, 0);
+				this->lastFirstFishingHabilit = std::chrono::steady_clock::now();
+				this->fishingFirstHabilitCount++;
+				this->FishingHabilitsCooldown = std::chrono::steady_clock::now();
+				this->lastFishingMovement = std::chrono::steady_clock::now();
+			}
+		}
+
+		if (thirtHabilitTime > 10.2) {
+			PostMessage(this->hWnd, WM_KEYDOWN, VK_NUMPAD3, 0);
 			std::this_thread::sleep_for(std::chrono::milliseconds(300));
-			PostMessage(this->hWnd, WM_KEYUP, VK_NUMPAD1, 0);
-			this->lastFishingHabilit = std::chrono::steady_clock::now();
+			PostMessage(this->hWnd, WM_KEYUP, VK_NUMPAD3, 0);
+
+			this->fishingFirstHabilitCount = 0;
+			this->FishingHabilitsCooldown = std::chrono::steady_clock::now();
+			this->lastThirtFishingHabilit = std::chrono::steady_clock::now();
+			this->lastFishingMovement = std::chrono::steady_clock::now();
 		}
 		return;
 	}
 
-	if (Recognition::CustomRecognition(this->hWnd, 570, 526, 710 - 570, 542 - 526, ImageType::fishingWait, 0.4)) {
-		return;
-	}
-	
-	if (Recognition::CustomRecognition(this->hWnd, ImageType::fishiIcon, 0.6, false)) {
-		Notification::Notification(this->charPerson.Nick.c_str(), "Finded possible Fishing spot");
+	if (elapseTime < 8) {
 		return;
 	}
 
-	if (Recognition::CustomRecognition(this->hWnd, 510, 256, 745 - 510, 495 - 256, ImageType::interaction, 0.5)) {
+	if (Recognition::CustomRecognition(this->hWnd, 570, 526, 710 - 570, 542 - 526, ImageType::fishingWait, 0.5)) {
+		return;
+	}
+
+	//if (Recognition::CustomRecognition(this->hWnd, ImageType::fishiIcon, 0.6, false)) {
+	//	Notification::Notification(this->charPerson.Nick.c_str(), "Finded possible Fishing spot");
+	//	return;
+	//}
+
+	if (Recognition::CustomRecognition(this->hWnd, 510, 256, 745 - 510, 495 - 256, ImageType::interaction, 0.6)) {
 		PostMessage(this->hWnd, WM_KEYDOWN, 0x46, 0);
 		std::this_thread::sleep_for(std::chrono::milliseconds(300));
 		PostMessage(this->hWnd, WM_KEYUP, 0x46, 0);
+		this->lastFishingMovement = std::chrono::steady_clock::now();
 		return;
 	}
 
-	switch (this->findFishingPos)
-	{
-		this->lastFishingHabilit = std::chrono::steady_clock::now();
-	case FindPos::up: {
-		SendMessage(this->hWnd, WM_MOUSEMOVE, 0, MAKELPARAM(652, 378 - 200)); // x e y são as coordenadas do clique
-		std::this_thread::sleep_for(std::chrono::milliseconds(300));
-		SendMessage(this->hWnd, WM_LBUTTONDOWN, MK_LBUTTON, 0);
-		SendMessage(this->hWnd, WM_LBUTTONUP, MK_LBUTTON, 0);
-		break;
-	}
-	case FindPos::right: {
-		SendMessage(this->hWnd, WM_MOUSEMOVE, 0, MAKELPARAM(652 + 300, 378)); // x e y são as coordenadas do clique
-		std::this_thread::sleep_for(std::chrono::milliseconds(300));
-		SendMessage(this->hWnd, WM_LBUTTONDOWN, MK_LBUTTON, 0);
-		SendMessage(this->hWnd, WM_LBUTTONUP, MK_LBUTTON, 0);
-		break;
-	}
-	case FindPos::down: {
-		SendMessage(this->hWnd, WM_MOUSEMOVE, 0, MAKELPARAM(652, 378 + 200)); // x e y são as coordenadas do clique
-		std::this_thread::sleep_for(std::chrono::milliseconds(300));
-		SendMessage(this->hWnd, WM_LBUTTONDOWN, MK_LBUTTON, 0);
-		SendMessage(this->hWnd, WM_LBUTTONUP, MK_LBUTTON, 0);
-		break;
-	}
-	case FindPos::left: {
-		SendMessage(this->hWnd, WM_MOUSEMOVE, 0, MAKELPARAM(652 - 300, 378)); // x e y são as coordenadas do clique
-		std::this_thread::sleep_for(std::chrono::milliseconds(300));
-		SendMessage(this->hWnd, WM_LBUTTONDOWN, MK_LBUTTON, 0);
-		SendMessage(this->hWnd, WM_LBUTTONUP, MK_LBUTTON, 0);
-		break;
-	}
-	default:
-		break;
+	if (!this->bFishingAutoMove) {
+		return;
 	}
 
+	if (this->fishingWaipont[this->fishingIndex].Pos.x == playerPos.x
+		&& this->fishingWaipont[this->fishingIndex].Pos.y == playerPos.y
+		/*&& this->fishingWaipont[this->fishingIndex].Pos.z == playerPos.z*/) {
+		NextFishingPosition();
+	}
+	else
+	{
+		int x = this->fishingWaipont[this->fishingIndex].Pos.x - playerPos.x;
+		int y = this->fishingWaipont[this->fishingIndex].Pos.y - playerPos.y;
+
+		/*if (this->fishingWaipont[this->fishingIndex].Pos.x < playerPos.x) {
+			pos.x = this->fishingWaipont[this->fishingIndex].Pos.x - playerPos.x;
+		}
+		else
+		{
+			pos.x = this->fishingWaipont[this->fishingIndex].Pos.x + playerPos.x;
+		}
+
+		if (this->fishingWaipont[this->fishingIndex].Pos.y < playerPos.y) {
+			pos.y = this->fishingWaipont[this->fishingIndex].Pos.y - playerPos.y;
+		}
+		else
+		{
+			pos.y = this->fishingWaipont[this->fishingIndex].Pos.x + playerPos.x;
+		}*/
+		/*POINT pos{};
+		pos.x = (1296 / 2 - 24) + x * 2;
+		pos.y = (759 / 2 - 25) + y * 2;*/
+
+
+		//if (pos.x < 350) {
+		//	pos.x = 350;
+		//}
+		//else if (pos.x > 1012) {
+		//	pos.x = 1012;
+		//}
+		//else {
+		//	pos.x += 1280 / 2 - 24;
+		//}
+
+		//if (pos.y > 552) {
+		//	pos.y = 552;
+		//}
+		//else if (pos.y < 100) {
+		//	pos.y = 100;
+		//}
+		//else {
+		//	pos.y += 720 / 2 - 25;
+		//}
+
+		//SendMessage(this->hWnd, WM_MOUSEMOVE, 0, MAKELPARAM(pos.x, pos.y)); // x e y são as coordenadas do clique
+		//std::this_thread::sleep_for(std::chrono::milliseconds(300));
+		//SendMessage(this->hWnd, WM_LBUTTONDOWN, MK_LBUTTON, 0);
+		//SendMessage(this->hWnd, WM_LBUTTONUP, MK_LBUTTON, 0);
+
+		if (x > 0) {
+			PostMessage(this->hWnd, WM_KEYDOWN, 0x44, 0);
+			std::this_thread::sleep_for(std::chrono::milliseconds(10));
+			PostMessage(this->hWnd, WM_KEYUP, 0x44, 0);
+		}
+		else if (x < 0) {
+			PostMessage(this->hWnd, WM_KEYDOWN, 0x41, 0);
+			std::this_thread::sleep_for(std::chrono::milliseconds(10));
+			PostMessage(this->hWnd, WM_KEYUP, 0x41, 0);
+		}
+
+		if (y > 0) {
+			PostMessage(this->hWnd, WM_KEYDOWN, 0x53, 0);
+			std::this_thread::sleep_for(std::chrono::milliseconds(10));
+			PostMessage(this->hWnd, WM_KEYUP, 0x53, 0);
+		}
+		else if (y < 0) {
+			PostMessage(this->hWnd, WM_KEYDOWN, 0x57, 0);
+			std::this_thread::sleep_for(std::chrono::milliseconds(10));
+			PostMessage(this->hWnd, WM_KEYUP, 0x57, 0);
+		}
+
+	}
 }
 
 void Client::FarmWood() {
@@ -388,6 +543,9 @@ void ClientNamespace::RunFarm() {
 		}
 
 		for (auto* client : ClientsFarm) {
+			if (client == NULL) {
+				continue;
+			}
 			if (!client->logged) {
 				auto it = std::find_if(ClientsFarm.begin(), ClientsFarm.end(), [client](const Client* obj) {
 					return obj->PID == client->PID;
@@ -465,17 +623,7 @@ void Client::close_handle() noexcept {
 	}
 }
 
-ULONG GetProcessBaseAddress(HANDLE& hProcess, HMODULE* phmod)
-{
-	ULONG cb;
-	return EnumProcessModulesEx(hProcess, phmod, sizeof(HMODULE), &cb, LIST_MODULES_DEFAULT) ? 0 : GetLastError();
-}
-
-#include <fstream>
-
-void Mapper::Start() {
-	std::string fileText;
-
+void Client::LoadWaipointConfig(const std::string& FileName, MapperType FarmType) {
 	if (!std::filesystem::exists("C:\\RavendawnBot")) {
 		std::filesystem::create_directories("C:\\RavendawnBot");
 		//here put a logic for downlaod recognitions files
@@ -485,7 +633,36 @@ void Mapper::Start() {
 		std::filesystem::create_directories("C:\\RavendawnBot\\accounts");
 	}
 
-	std::ifstream file_json("C:\\RavendawnBot\\accounts\\mapper.json");
+	if (!std::filesystem::exists("C:\\RavendawnBot\\Farms")) {
+		std::filesystem::create_directories("C:\\RavendawnBot\\Farms");
+	}
+
+	if (!std::filesystem::exists("C:\\RavendawnBot\\Farms\\Fishi")) {
+		std::filesystem::create_directories("C:\\RavendawnBot\\Farms\\Fishi");
+	}
+
+	if (!std::filesystem::exists("C:\\RavendawnBot\\Farms\\Wood")) {
+		std::filesystem::create_directories("C:\\RavendawnBot\\Farms\\Wood");
+	}
+
+	std::string type;
+	switch (FarmType)
+	{
+	case 0:
+	case 1: {
+		type = "C:\\RavendawnBot\\Farms\\Wood\\"+ FileName + ".json";
+		break;
+	}
+	case 2:
+	case 3: {
+		type = "C:\\RavendawnBot\\Farms\\Fishi\\" + FileName + ".json";
+		break;
+	}
+	default:
+		break;
+	}
+
+	std::ifstream file_json(type);
 	if (!file_json.is_open()) {
 		exit(0);
 	}
@@ -500,13 +677,204 @@ void Mapper::Start() {
 	}
 	file_json.close();
 
-	int size = json.size();
+	Vector3 playerPos{
+	this->read<int>(this->BaseAddress + 0x27CCC1C),
+	this->read<int>(this->BaseAddress + 0x27CCC20),
+	this->read<int>(this->BaseAddress + 0x27CC498)
+	};
 
-	for (int i{ 0 }; i < size; i++) {
-		mapper.waipoint.push_back(json[i]);
+	if (this->woodWaipont.size()) {
+		this->woodWaipont.clear();
+	}
+
+	if (this->fishingWaipont.size()) {
+		this->fishingWaipont.clear();
+	}
+
+	for (const auto& item : json) {
+		Waipoint waipoint;
+		from_json(item, waipoint);
+		switch (FarmType)
+		{
+		case 0:
+		case 1: {
+			this->woodWaipont.push_back(waipoint);
+			break;
+		}
+		case 2:
+		case 3: {
+			this->fishingWaipont.push_back(waipoint);
+			break;
+		}
+		default:
+			break;
+		}
+	}
+
+	switch (FarmType)
+	{
+	case 0:
+	case 1: {
+		findNearest(this->woodWaipont, playerPos, MapperType::Wood);
+		this->bAutoWoodFarmPopup = true;
+		break;
+	}
+
+	case 2:
+	case 3: {
+		findNearest(this->fishingWaipont, playerPos, MapperType::Fishi);
+		this->bAutoFishingPopup = true;
+		break;
+	}
+
+	default:
+		break;
 	}
 }
 
+void Client::findNearest(std::vector<Waipoint>& vectors, const Vector3& location, const MapperType mapperType) {
+	if (vectors.empty()) {
+		throw std::invalid_argument("List of vectors is empty.");
+	}
+
+	std::vector<Waipoint> filtred;
+	for (const auto& filter : vectors) {
+		switch (mapperType)
+		{
+		case 0:
+		case 1: {
+			if (filter.mapperType == Wood || filter.mapperType == WalkWood) {
+				filtred.push_back(filter);
+			}
+			break;
+		}
+		case 2:
+		case 3: {
+			if (filter.mapperType == npc || filter.mapperType == Fishi || filter.mapperType == WalkFishi) {
+				filtred.push_back(filter);
+			}
+			break;
+		}
+		default:
+			break;
+		}
+	}
+
+	if (!filtred.size())
+	{
+		Notification::Notification(this->Login.c_str(), "Error");
+		return;
+	}
+
+	Waipoint nearest = filtred.front();
+	double minDistance = distance(filtred.front().Pos, location);
+
+	for (const auto& item : filtred) {
+		double dist = distance(item.Pos, location);
+		if (dist < minDistance) {
+			minDistance = dist;
+			nearest = item;
+		}
+	}
+
+	vectors = filtred;
+
+	switch (mapperType)
+	{
+	case 0: //wood
+	case 1: {
+
+		break;
+	}
+	case 2://fishing
+	case 3: {
+		this->fishingIndex = nearest.index;
+		break;
+	}
+	default:
+		break;
+	}
+}
+
+ULONG GetProcessBaseAddress(HANDLE& hProcess, HMODULE* phmod)
+{
+	ULONG cb;
+	return EnumProcessModulesEx(hProcess, phmod, sizeof(HMODULE), &cb, LIST_MODULES_DEFAULT) ? 0 : GetLastError();
+}
+
+#include <fstream>
+
+void Mapper::Load(const std::string& FileName, MapperType FarmType) {
+	if (!std::filesystem::exists("C:\\RavendawnBot")) {
+		std::filesystem::create_directories("C:\\RavendawnBot");
+		//here put a logic for downlaod recognitions files
+	}
+
+	if (!std::filesystem::exists("C:\\RavendawnBot\\accounts")) {
+		std::filesystem::create_directories("C:\\RavendawnBot\\accounts");
+	}
+
+	if (!std::filesystem::exists("C:\\RavendawnBot\\Farms")) {
+		std::filesystem::create_directories("C:\\RavendawnBot\\Farms");
+	}
+
+	if (!std::filesystem::exists("C:\\RavendawnBot\\Farms\\Fishi")) {
+		std::filesystem::create_directories("C:\\RavendawnBot\\Farms\\Fishi");
+	}
+
+	if (!std::filesystem::exists("C:\\RavendawnBot\\Farms\\Wood")) {
+		std::filesystem::create_directories("C:\\RavendawnBot\\Farms\\Wood");
+	}
+
+
+	std::string type;
+
+	switch (FarmType)
+	{
+	case 0:
+	case 1: {
+		type = "Wood";
+		break;
+	}
+	case 2:
+	case 3: {
+		type = "Fishi";
+		break;
+	}
+	default:
+		break;
+	}
+
+	std::ifstream file_json("C:\\RavendawnBot\\Farms\\" + type + "\\" + FileName + ".json");
+	if (!file_json.is_open()) {
+		exit(0);
+	}
+
+	nlohmann::json json;
+	try {
+		file_json >> json;
+	}
+	catch (const std::exception& e) {
+		std::cerr << "Erro ao ler o arquivo JSON: " << e.what() << std::endl;
+		return;
+	}
+	file_json.close();
+
+	/*int size = json.size();
+
+	for (int i{ 0 }; i < size; i++) {
+		mapper.waipoint.push_back(json[i]);
+	}*/
+
+	for (const auto& item : json) {
+		Waipoint waipoint;
+		from_json(item, waipoint);
+		mapper.waipoint.push_back(waipoint);
+	}
+
+	mapper.maxIndex = mapper.waipoint.size() - 1;
+}
+
 Mapper::~Mapper() {
-	
+
 }
