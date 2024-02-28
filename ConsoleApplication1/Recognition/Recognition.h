@@ -7,7 +7,10 @@
 enum ImageType {
 	street = 0,
 	greenBar = 1,
+
 	axieIcon = 2,
+	axieWaiting = 11,
+
 	interaction = 3,
 	ColectionIcon = 4,
 	EnemyDetected = 5,
@@ -18,6 +21,7 @@ enum ImageType {
 	cleanSlotInv = 10,
 
 
+	error_mining = 96,
 	failSellText = 97,
 	sellText = 98,
 	sellButton = 99
@@ -27,6 +31,9 @@ enum ImageType {
 inline std::vector<std::pair<std::string, ImageType>> Images{
 { "C:\\RavendawnBot\\axie_icon0.png", ImageType::axieIcon }, { "C:\\RavendawnBot\\axie_icon1.png", ImageType::axieIcon },
 { "C:\\RavendawnBot\\axie_icon2.png", ImageType::axieIcon },
+
+{ "C:\\RavendawnBot\\axie_wait0.png", ImageType::axieWaiting }, { "C:\\RavendawnBot\\axie_wait2.png", ImageType::axieWaiting },
+{ "C:\\RavendawnBot\\axie_wait2.png", ImageType::axieWaiting },
 
 { "C:\\RavendawnBot\\green bar 0.png", ImageType::greenBar }, { "C:\\RavendawnBot\\green bar 1.png", ImageType::greenBar },
 
@@ -70,6 +77,7 @@ inline std::vector<std::pair<std::string, ImageType>> Images{
 
 { "C:\\RavendawnBot\\coleting0.png", ImageType::ColectionIcon }, { "C:\\RavendawnBot\\coleting1.png", ImageType::ColectionIcon },
 
+
 { "C:\\RavendawnBot\\enemy_find.png", ImageType::EnemyDetected }, { "C:\\RavendawnBot\\enemy_locked.png", ImageType::EnemyLocked },
 
 { "C:\\RavendawnBot\\fishing_icon0.png", ImageType::fishiIcon }, { "C:\\RavendawnBot\\fishing_icon1.png", ImageType::fishiIcon },
@@ -81,7 +89,9 @@ inline std::vector<std::pair<std::string, ImageType>> Images{
 { "C:\\RavendawnBot\\sell_fish.png", ImageType::sellText },
 { "C:\\RavendawnBot\\sell_button.png", ImageType::sellButton },
 
-{ "C:\\RavendawnBot\\inventory.png", ImageType::cleanSlotInv}
+{ "C:\\RavendawnBot\\inventory.png", ImageType::cleanSlotInv},
+
+{ "C:\\RavendawnBot\\error_mining0.png", ImageType::error_mining}, { "C:\\RavendawnBot\\error_mining1.png", ImageType::error_mining},
 
 };
 
