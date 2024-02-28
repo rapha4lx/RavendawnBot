@@ -27,7 +27,9 @@ enum MapperType {
 	WalkWood = 1,
 	Fishi = 2,
 	WalkFishi = 3,
-	npc = 4
+	npc = 4,
+	Ore = 5,
+	OreWalk = 6
 };
 
 struct Vector3 {
@@ -186,6 +188,9 @@ public:
 		j.at("SkillCooldown").get_to(account.charPerson.skillCooldown);
 	}
 
+	void move(int &x, int &y, int &z);
+
+
 	//Auto solve task
 	void AutoTask();
 	bool bAutoTask{ false };
@@ -193,6 +198,7 @@ public:
 	//char attack
 	void AutoAttack();
 	bool bAutoAttack{ false };
+	bool bAutoAttackMove{ false };
 	std::chrono::steady_clock::time_point lastAutoAttackMoveTime;
 	std::chrono::steady_clock::time_point AutoAttackIntervalTime;
 
@@ -219,11 +225,26 @@ public:
 	void FarmWood();
 	std::vector<Waipoint> woodWaipont;
 	FindPos farmPosition{ FindPos::down };
+	int woodIndex{ -1 };
 	int woodFarmStage{ 0 };
 	int woodErrorCount{ 0 };
 	bool bWoodFarm{ false };
 	std::chrono::steady_clock::time_point lastAxieDetectTime;
 	std::chrono::steady_clock::time_point changeFarmPositionTime;
+	void NextWoodPosition();
+	bool bWoodIncreseDecreseIndex{ true };
+
+
+	//Ore Farm
+	void FarmOre();
+	std::vector<Waipoint> oreWaipont;
+	int oreIndex{ -1 };
+	int bOreFarm{ false };
+	std::chrono::steady_clock::time_point lastOreMoveTime;
+	std::chrono::steady_clock::time_point lastOreDetectTime;
+	void NextOrePosition();
+	bool bOreIncreseDecreseIndex{ true };
+
 
 
 	void DisableAllFarmsFunctions();
@@ -261,6 +282,7 @@ public:
 	//ui
 	bool bAutoFishingPopup{ false };
 	bool bAutoWoodFarmPopup{ false };
+	bool bAutoOreFarmPopup{ false };
 	bool bShowSavePopup{ false };
 
 private:
@@ -284,7 +306,7 @@ inline std::vector<Client*> ClientsFarm;
 inline const char* mapperTypeIndex[]{
 	"Wood", "WalkWood",
 	"Fishi", "WalkFishi",
-	"npc"
+	"npc", "Ore", "OreWalk"
 };
 inline int mapperIndex{ 0 };
 

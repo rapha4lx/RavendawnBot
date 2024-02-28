@@ -12,6 +12,91 @@ int random(int low, int high) {
 	return rand() % (high - low + 1) + low;
 }
 
+void Client::move(int& x, int& y, int& z) {
+	//if (x > 0 && y > 0) {//diagonal direita para baixo
+	//	PostMessage(this->hWnd, WM_KEYDOWN, 0x44, 0);//D
+	//	std::this_thread::sleep_for(std::chrono::milliseconds(5));
+	//	PostMessage(this->hWnd, WM_KEYDOWN, 0x53, 0);//S
+	//	std::this_thread::sleep_for(std::chrono::milliseconds(5));
+	//	PostMessage(this->hWnd, WM_KEYUP, 0x44, 0);
+	//	PostMessage(this->hWnd, WM_KEYUP, 0x53, 0);
+	//	return;
+	//}
+	//else if (x < 0 && y < 0) {//diagonal esqueda para cima
+	//	PostMessage(this->hWnd, WM_KEYDOWN, 0x41, 0);//A
+	//	std::this_thread::sleep_for(std::chrono::milliseconds(5));
+	//	PostMessage(this->hWnd, WM_KEYDOWN, 0x57, 0);//W
+	//	std::this_thread::sleep_for(std::chrono::milliseconds(5));
+	//	PostMessage(this->hWnd, WM_KEYUP, 0x41, 0);
+	//	PostMessage(this->hWnd, WM_KEYUP, 0x57, 0);
+	//	return;
+	//}
+	//else if (x < 0 && y > 0) { //diagonal esqueda para baixo
+	//	PostMessage(this->hWnd, WM_KEYDOWN, 0x41, 0);//A
+	//	std::this_thread::sleep_for(std::chrono::milliseconds(5));
+	//	PostMessage(this->hWnd, WM_KEYDOWN, 0x53, 0);//S
+	//	std::this_thread::sleep_for(std::chrono::milliseconds(5));
+	//	PostMessage(this->hWnd, WM_KEYUP, 0x41, 0);
+	//	PostMessage(this->hWnd, WM_KEYUP, 0x53, 0);
+	//	return;
+	//}
+	//else if (x > 0 && y < 0) { //diagonal direita para cima
+	//	PostMessage(this->hWnd, WM_KEYDOWN, 0x44, 0);//D
+	//	std::this_thread::sleep_for(std::chrono::milliseconds(5));
+	//	PostMessage(this->hWnd, WM_KEYDOWN, 0x57, 0);//W
+	//	std::this_thread::sleep_for(std::chrono::milliseconds(5));
+	//	PostMessage(this->hWnd, WM_KEYUP, 0x44, 0);
+	//	PostMessage(this->hWnd, WM_KEYUP, 0x57, 0);
+	//	return;
+	//}
+	//else if (x > 0) {
+	//	PostMessage(this->hWnd, WM_KEYDOWN, 0x44, 0);//D
+	//	std::this_thread::sleep_for(std::chrono::milliseconds(5));
+	//	PostMessage(this->hWnd, WM_KEYUP, 0x44, 0);
+	//	return;
+	//}
+	//else if (x < 0) {
+	//	PostMessage(this->hWnd, WM_KEYDOWN, 0x41, 0);//A
+	//	std::this_thread::sleep_for(std::chrono::milliseconds(5));
+	//	PostMessage(this->hWnd, WM_KEYUP, 0x41, 0);
+	//	return;
+	//}
+	//else if (y > 0) {
+	//	PostMessage(this->hWnd, WM_KEYDOWN, 0x53, 0);//S
+	//	std::this_thread::sleep_for(std::chrono::milliseconds(5));
+	//	PostMessage(this->hWnd, WM_KEYUP, 0x53, 0);
+	//	return;
+	//}
+	//else if (y < 0) {
+	//	PostMessage(this->hWnd, WM_KEYDOWN, 0x57, 0);//D
+	//	std::this_thread::sleep_for(std::chrono::milliseconds(5));
+	//	PostMessage(this->hWnd, WM_KEYUP, 0x57, 0);
+	//	return;
+	//}
+
+	if (x > 0) {
+		PostMessage(this->hWnd, WM_KEYDOWN, 0x44, 0);
+		std::this_thread::sleep_for(std::chrono::milliseconds(10));
+		PostMessage(this->hWnd, WM_KEYUP, 0x44, 0);
+	}
+	else if (x < 0) {
+		PostMessage(this->hWnd, WM_KEYDOWN, 0x41, 0);
+		std::this_thread::sleep_for(std::chrono::milliseconds(10));
+		PostMessage(this->hWnd, WM_KEYUP, 0x41, 0);
+	}
+
+	if (y > 0) {
+		PostMessage(this->hWnd, WM_KEYDOWN, 0x53, 0);
+		std::this_thread::sleep_for(std::chrono::milliseconds(10));
+		PostMessage(this->hWnd, WM_KEYUP, 0x53, 0);
+	}
+	else if (y < 0) {
+		PostMessage(this->hWnd, WM_KEYDOWN, 0x57, 0);
+		std::this_thread::sleep_for(std::chrono::milliseconds(10));
+		PostMessage(this->hWnd, WM_KEYUP, 0x57, 0);
+	}
+}
+
 void Client::DisableAllFarmsFunctions() {
 	this->bAutoFishing = false;
 	this->bFishingAutoMove = false;
@@ -38,16 +123,16 @@ void Client::AutoAttack() {
 
 	int ran{ random(0, 9) };
 
-	if (lastAutoAttackMoveTime > 10) {
-		PostMessage(this->hWnd, WM_KEYDOWN, 0x41, 0);
-		std::this_thread::sleep_for(std::chrono::milliseconds(300));
-		PostMessage(this->hWnd, WM_KEYUP, 0x41, 0);
+	//if (lastAutoAttackMoveTime > 10) {
+	//	PostMessage(this->hWnd, WM_KEYDOWN, 0x41, 0);
+	//	std::this_thread::sleep_for(std::chrono::milliseconds(300));
+	//	PostMessage(this->hWnd, WM_KEYUP, 0x41, 0);
 
-		PostMessage(this->hWnd, WM_KEYDOWN, 0x44, 0);
-		std::this_thread::sleep_for(std::chrono::milliseconds(300));
-		PostMessage(this->hWnd, WM_KEYUP, 0x44, 0);
-		this->lastAutoAttackMoveTime = std::chrono::steady_clock::now();
-	}
+	//	PostMessage(this->hWnd, WM_KEYDOWN, 0x44, 0);
+	//	std::this_thread::sleep_for(std::chrono::milliseconds(300));
+	//	PostMessage(this->hWnd, WM_KEYUP, 0x44, 0);
+	//	this->lastAutoAttackMoveTime = std::chrono::steady_clock::now();
+	//}
 
 
 	if (AutoAttackIntervalTime < 2) {
@@ -55,13 +140,14 @@ void Client::AutoAttack() {
 	}
 
 
-	if (!Recognition::CustomRecognition(this->hWnd, 136, 211, 152 - 136, 230 - 211, ImageType::EnemyLocked, 0.7)) {
-		if (Recognition::CustomRecognition(this->hWnd, 136, 211, 152 - 136, 230 - 211, ImageType::EnemyDetected, 0.7)) {
-			PostMessage(this->hWnd, WM_KEYDOWN, VK_TAB, 0);
-			std::this_thread::sleep_for(std::chrono::milliseconds(300));
-			PostMessage(this->hWnd, WM_KEYUP, VK_TAB, 0);
-		}
-	}
+	///*if (!Recognition::CustomRecognition(this->hWnd, 136, 211, 152 - 136, 230 - 211, ImageType::EnemyLocked, 0.7)) {
+	//	if (Recognition::CustomRecognition(this->hWnd, 136, 211, 152 - 136, 230 - 211, ImageType::EnemyDetected, 0.7)) {
+	//	}
+	//}*/
+
+	//PostMessage(this->hWnd, WM_KEYDOWN, VK_TAB, 0);
+	//std::this_thread::sleep_for(std::chrono::milliseconds(300));
+	//PostMessage(this->hWnd, WM_KEYUP, VK_TAB, 0);
 
 	switch (ran)
 	{
@@ -156,6 +242,40 @@ void Client::NextFishingPosition() {
 		if (this->fishingIndex == -1) {
 			this->bFishingIncreseDecreseIndex = true;
 			this->fishingIndex++;
+		}
+	}
+}
+
+void Client::NextWoodPosition() {
+	if (this->bWoodIncreseDecreseIndex) {
+		this->woodIndex++;
+		if (this->woodIndex > this->woodWaipont.size() - 1) {
+			this->bWoodIncreseDecreseIndex = false;
+			this->woodIndex--;
+		}
+	}
+	else {
+		this->woodIndex--;
+		if (this->woodIndex == -1) {
+			this->bWoodIncreseDecreseIndex = true;
+			this->woodIndex++;
+		}
+	}
+}
+
+void Client::NextOrePosition() {
+	if (this->bOreIncreseDecreseIndex) {
+		this->oreIndex++;
+		if (this->oreIndex > this->oreWaipont.size() - 1) {
+			this->bOreIncreseDecreseIndex = false;
+			this->oreIndex--;
+		}
+	}
+	else {
+		this->oreIndex--;
+		if (this->oreIndex == -1) {
+			this->bOreIncreseDecreseIndex = true;
+			this->oreIndex++;
 		}
 	}
 }
@@ -369,168 +489,161 @@ void Client::AutoFishing() {
 }
 
 void Client::FarmWood() {
-	auto currentTime{ std::chrono::steady_clock::now() };
-	auto elapseTime{ std::chrono::duration_cast<std::chrono::seconds>(currentTime - this->lastAxieDetectTime).count() };
-	auto changeFarmPositionTime{ std::chrono::duration_cast<std::chrono::minutes>(currentTime - this->changeFarmPositionTime).count() };
-
-	//if (elapseTime < 1) {
-	//	if (Recognition::ComparOldPos(this->hWnd, this->oldPlayerPos)) {
-	//		this->woodErrorCount++;
-	//		return;
-	//	}
-	//}
-
-	if (changeFarmPositionTime >= 4) {
-		this->changeFarmPositionTime = std::chrono::steady_clock::now();
-		switch (this->farmPosition)
-		{
-		case FindPos::down: {
-			this->farmPosition = FindPos::up;
-			break;
-		}
-		case FindPos::up: {
-			this->farmPosition = FindPos::down;
-			break;
-		}
-		default:
-			break;
-		}
-	}
-
-	//568 525
-	//577 541
 	if (Recognition::CustomRecognition(this->hWnd, 510, 256, 745 - 510, 495 - 256, ImageType::interaction, 0.5)) {
 		PostMessage(this->hWnd, WM_KEYDOWN, 0x46, 0);
 		std::this_thread::sleep_for(std::chrono::milliseconds(300));
 		PostMessage(this->hWnd, WM_KEYUP, 0x46, 0);
-		this->woodFarmStage = 2;
-		return;
-	}
-
-	if (Recognition::CustomRecognition(this->hWnd, 551, 245, 575 - 551, 285 - 245, ImageType::ColectionIcon, 0.6)
-		|| Recognition::CustomRecognition(this->hWnd, 568, 525, 578 - 568, 541 - 525, ImageType::ColectionIcon, 0.2)) {
-		if (Recognition::CustomRecognition(this->hWnd, 553, 255, 727 - 553, 279 - 255, ImageType::greenBar, 0.6)) {
-			PostMessage(this->hWnd, WM_KEYDOWN, 0x46, 0);
-			std::this_thread::sleep_for(std::chrono::milliseconds(300));
-			PostMessage(this->hWnd, WM_KEYUP, 0x46, 0);
-			return;
-		}
-		return;
-	}
-
-	//player position 
-	//652 378
-	// 
-	//548 279
-	//684 413
-
-	if (Recognition::ComparOldPos(this->hWnd, this->oldPlayerPos)) {
-		if (elapseTime < 10) {
-			return;
-		}
-	}
-
-
-	POINT pos{ 0 };
-	int ran{ random(0,7) };
-	switch (ran)
-	{
-	case 0: {
-		pos.x -= 40;
-		break;
-	}
-	case 1: {
-		pos.y -= 40;
-		break;
-	}
-	case 2: {
-		pos.x += 40;
-		break;
-	}
-	case 3: {
-		pos.y += 40;
-		break;
-	}
-	case 4: {
-		pos.x -= 40;
-		pos.y -= 40;
-		break;
-	}
-	case 5: {
-		pos.x += 40;
-		pos.y -= 40;
-		break;
-	}
-	case 6: {
-		pos.x += 40;
-		pos.y += 40;
-		break;
-	}
-	case 7: {
-		pos.x += 40;
-		pos.y += 40;
-		break;
-	}
-	default:
-		pos.x + 40;
-		break;
-	}
-	if (Recognition::CustomRecognition(this->hWnd, ImageType::axieIcon, 0.7, pos, false)) {
-		//if (Recognition::ComparOldPos(this->hWnd, this->oldPlayerPos)) {
-		SendMessage(this->hWnd, WM_MOUSEMOVE, 0, MAKELPARAM(pos.x, pos.y)); // x e y são as coordenadas do clique
-		std::this_thread::sleep_for(std::chrono::milliseconds(300));
-		SendMessage(this->hWnd, WM_LBUTTONDOWN, MK_LBUTTON, 0);
-		SendMessage(this->hWnd, WM_LBUTTONUP, MK_LBUTTON, 0);
 		this->lastAxieDetectTime = std::chrono::steady_clock::now();
-		//}
-		Recognition::UpdatePos(this->hWnd, this->oldPlayerPos);
 		return;
 	}
-	else {
-		if (Recognition::WoodFarm(this->hWnd, this->farmPosition, false)) {
-			SendMessage(this->hWnd, WM_MOUSEMOVE, 0, MAKELPARAM(Recognition::bestWood.x, Recognition::bestWood.y)); // x e y são as coordenadas do clique
-			std::this_thread::sleep_for(std::chrono::milliseconds(300));
-			SendMessage(this->hWnd, WM_LBUTTONDOWN, MK_LBUTTON, 0);
-			SendMessage(this->hWnd, WM_LBUTTONUP, MK_LBUTTON, 0);
-			this->woodErrorCount = 0;
-			this->woodFarmStage = 0;
-			return;
-		}
-		else {
-			switch (random(0, 3))
-			{
-			case 0: {
-				SendMessage(this->hWnd, WM_MOUSEMOVE, 0, MAKELPARAM(100, 100)); // x e y são as coordenadas do clique
-				std::this_thread::sleep_for(std::chrono::milliseconds(300));
-				SendMessage(this->hWnd, WM_LBUTTONDOWN, MK_LBUTTON, 0);
-				SendMessage(this->hWnd, WM_LBUTTONUP, MK_LBUTTON, 0);
-				break;
-			}
-			case 1: {
-				SendMessage(this->hWnd, WM_MOUSEMOVE, 0, MAKELPARAM(1200, 100)); // x e y são as coordenadas do clique
-				std::this_thread::sleep_for(std::chrono::milliseconds(300));
-				SendMessage(this->hWnd, WM_LBUTTONDOWN, MK_LBUTTON, 0);
-				SendMessage(this->hWnd, WM_LBUTTONUP, MK_LBUTTON, 0);
-				break;
-			}
-			case 2: {
-				SendMessage(this->hWnd, WM_MOUSEMOVE, 0, MAKELPARAM(100, 620)); // x e y são as coordenadas do clique
-				std::this_thread::sleep_for(std::chrono::milliseconds(300));
-				SendMessage(this->hWnd, WM_LBUTTONDOWN, MK_LBUTTON, 0);
-				SendMessage(this->hWnd, WM_LBUTTONUP, MK_LBUTTON, 0);
-				break;
-			}
-			case 3: {
-				SendMessage(this->hWnd, WM_MOUSEMOVE, 0, MAKELPARAM(1200, 620)); // x e y são as coordenadas do clique
-				std::this_thread::sleep_for(std::chrono::milliseconds(300));
-				SendMessage(this->hWnd, WM_LBUTTONDOWN, MK_LBUTTON, 0);
-				SendMessage(this->hWnd, WM_LBUTTONUP, MK_LBUTTON, 0);
-				break;
-			}
-			default:
-				break;
+
+	if (Recognition::CustomRecognition(this->hWnd, 553, 255, 727 - 553, 279 - 255, ImageType::greenBar, 0.7)) {
+		PostMessage(this->hWnd, WM_KEYDOWN, 0x46, 0);
+		std::this_thread::sleep_for(std::chrono::milliseconds(30));
+		PostMessage(this->hWnd, WM_KEYUP, 0x46, 0);
+		return;
+	}
+
+	if (Recognition::CustomRecognition(this->hWnd, 570, 526, 710 - 570, 542 - 526, ImageType::axieWaiting, 0.4)) {
+		return;
+	}
+
+	auto currentTime{ std::chrono::steady_clock::now() };
+	auto elapseTime{ std::chrono::duration_cast<std::chrono::seconds>(currentTime - this->lastAxieDetectTime).count() };
+	//auto changeFarmPositionTime{ std::chrono::duration_cast<std::chrono::minutes>(currentTime - this->changeFarmPositionTime).count() };
+
+	Vector3 playerPos{
+		this->read<int>(this->BaseAddress + 0x27CCC1C),
+		this->read<int>(this->BaseAddress + 0x27CCC20),
+		this->read<int>(this->BaseAddress + 0x27CC498)
+	};
+
+	if (this->woodWaipont[this->woodIndex].mapperType == MapperType::Wood) {
+		if (this->woodWaipont[this->woodIndex].Pos.x == playerPos.x
+			&& this->woodWaipont[this->woodIndex].Pos.y == playerPos.y
+			/*&& this->woodWaipont[this->woodIndex].Pos.z == playerPos.z*/)
+		{
+			if (elapseTime < 2) {
+				return;
 			}
 		}
+	}
+
+	if (!this->woodWaipont.size()) {
+		this->woodWaipont = mapper.waipoint;
+		findNearest(this->woodWaipont, playerPos, MapperType::Wood);
+	}
+
+	if (this->woodWaipont[this->woodIndex].Pos.x == playerPos.x
+		&& this->woodWaipont[this->woodIndex].Pos.y == playerPos.y
+		/*&& this->fishingWaipont[this->fishingIndex].Pos.z == playerPos.z*/) {
+		NextWoodPosition();
+	}
+	else
+	{
+		int x{ this->woodWaipont[this->woodIndex].Pos.x - playerPos.x };
+		int y{ this->woodWaipont[this->woodIndex].Pos.y - playerPos.y };
+		int z{ 0 };
+		this->move(x, y, z);
+
+		/*if (y > 0) {
+			PostMessage(this->hWnd, WM_KEYDOWN, 0x53, 0);
+			std::this_thread::sleep_for(std::chrono::milliseconds(10));
+			PostMessage(this->hWnd, WM_KEYUP, 0x53, 0);
+		}
+		else if (y < 0) {
+			PostMessage(this->hWnd, WM_KEYDOWN, 0x57, 0);
+			std::this_thread::sleep_for(std::chrono::milliseconds(10));
+			PostMessage(this->hWnd, WM_KEYUP, 0x57, 0);
+		}*/
+	}
+}
+
+void Client::FarmOre() {
+	if (Recognition::CustomRecognition(this->hWnd, 100, 205, 59, 36, ImageType::EnemyLocked, 0.6)) {
+		this->AutoAttack();
+		return;
+	}
+	else if (Recognition::CustomRecognition(this->hWnd, 100, 205, 59, 36, ImageType::EnemyDetected, 0.6)) {
+		PostMessage(this->hWnd, WM_KEYDOWN, VK_TAB, 0);
+		std::this_thread::sleep_for(std::chrono::milliseconds(5));
+		PostMessage(this->hWnd, WM_KEYUP, VK_TAB, 0);
+
+	}
+
+	if (Recognition::CustomRecognition(this->hWnd, 510, 256, 745 - 510, 495 - 256, ImageType::interaction, 0.5)) {
+		PostMessage(this->hWnd, WM_KEYDOWN, 0x46, 0);
+		std::this_thread::sleep_for(std::chrono::milliseconds(30));
+		PostMessage(this->hWnd, WM_KEYUP, 0x46, 0);
+		this->lastOreDetectTime = std::chrono::steady_clock::now();
+
+		std::this_thread::sleep_for(std::chrono::seconds(2));
+		if (Recognition::CustomRecognition(this->hWnd, 510, 256, 745 - 510, 495 - 256, ImageType::error_mining, 0.5)) {
+			Vector3 playerPos{
+				this->read<int>(this->BaseAddress + 0x27CCC1C),
+				this->read<int>(this->BaseAddress + 0x27CCC20),
+				this->read<int>(this->BaseAddress + 0x27CC498)
+			};
+			int x{ this->oreWaipont[this->oreIndex].Pos.x - playerPos.x };
+			int y{ this->oreWaipont[this->oreIndex].Pos.y - playerPos.y };
+			int z{ 0 };
+			this->move(x, y, z);
+		}
+		return;
+	}
+
+	if (Recognition::CustomRecognition(this->hWnd, 553, 255, 727 - 553, 279 - 255, ImageType::greenBar, 0.7)) {
+		PostMessage(this->hWnd, WM_KEYDOWN, 0x46, 0);
+		std::this_thread::sleep_for(std::chrono::milliseconds(30));
+		PostMessage(this->hWnd, WM_KEYUP, 0x46, 0);
+		this->lastOreDetectTime = std::chrono::steady_clock::now();
+		return;
+	}
+
+	if (Recognition::CustomRecognition(this->hWnd, 570, 526, 710 - 570, 542 - 526, ImageType::axieWaiting, 0.4)) {
+		return;
+	}
+
+	auto currentTime{ std::chrono::steady_clock::now() };
+	auto elapseTime{ std::chrono::duration_cast<std::chrono::seconds>(currentTime - this->lastOreMoveTime).count() };
+	auto lastOreDetectTime{ std::chrono::duration_cast<std::chrono::seconds>(currentTime - this->lastOreDetectTime).count() };
+
+	if (lastOreDetectTime < 2) {
+		return;
+	}
+
+	Vector3 playerPos{
+		this->read<int>(this->BaseAddress + 0x27CCC1C),
+		this->read<int>(this->BaseAddress + 0x27CCC20),
+		this->read<int>(this->BaseAddress + 0x27CC498)
+	};
+
+	if (this->oreWaipont[this->oreIndex].mapperType == MapperType::Ore) {
+		if (this->oreWaipont[this->oreIndex].Pos.x == playerPos.x
+			&& this->oreWaipont[this->oreIndex].Pos.y == playerPos.y
+			/*&& this->oreWaipont[this->oreIndex].Pos.z == playerPos.z*/) {
+			if (elapseTime < 2) {
+				return;
+			}
+		}
+	}
+	if (!this->oreWaipont.size()) {
+		this->oreWaipont = mapper.waipoint;
+		findNearest(this->oreWaipont, playerPos, MapperType::Wood);
+	}
+
+	if (this->oreWaipont[this->oreIndex].Pos.x == playerPos.x
+		&& this->oreWaipont[this->oreIndex].Pos.y == playerPos.y
+		/*&& this->oreWaipont[this->oreIndex].Pos.z == playerPos.z*/) {
+		NextOrePosition();
+	}
+	else
+	{
+		int x{ this->oreWaipont[this->oreIndex].Pos.x - playerPos.x };
+		int y{ this->oreWaipont[this->oreIndex].Pos.y - playerPos.y };
+		int z{ 0 };
+		move(x, y, z);
+		this->lastOreMoveTime = std::chrono::steady_clock::now();
 	}
 }
 
@@ -560,7 +673,7 @@ void ClientNamespace::RunFarm() {
 			}
 
 			if (!client->bAutoFishing && !client->bAutoTask &&
-				!client->bWoodFarm && !client->bAutoAttack)
+				!client->bWoodFarm && !client->bAutoAttack && !client->bOreFarm)
 			{
 				auto it = std::find_if(ClientsFarm.begin(), ClientsFarm.end(), [client](const Client* obj) {
 					return obj->PID == client->PID;
@@ -587,6 +700,10 @@ void ClientNamespace::RunFarm() {
 
 			if (client->bWoodFarm) {
 				client->FarmWood();
+			}
+
+			if (client->bOreFarm) {
+				client->FarmOre();
 			}
 
 		}
@@ -650,12 +767,17 @@ void Client::LoadWaipointConfig(const std::string& FileName, MapperType FarmType
 	{
 	case 0:
 	case 1: {
-		type = "C:\\RavendawnBot\\Farms\\Wood\\"+ FileName + ".json";
+		type = "C:\\RavendawnBot\\Farms\\Wood\\" + FileName + ".json";
 		break;
 	}
 	case 2:
 	case 3: {
 		type = "C:\\RavendawnBot\\Farms\\Fishi\\" + FileName + ".json";
+		break;
+	}
+	case 5:
+	case 6: {
+		type = "C:\\RavendawnBot\\Farms\\Ore\\" + FileName + ".json";
 		break;
 	}
 	default:
@@ -691,6 +813,10 @@ void Client::LoadWaipointConfig(const std::string& FileName, MapperType FarmType
 		this->fishingWaipont.clear();
 	}
 
+	if (this->oreWaipont.size()) {
+		this->oreWaipont.clear();
+	}
+
 	for (const auto& item : json) {
 		Waipoint waipoint;
 		from_json(item, waipoint);
@@ -704,6 +830,11 @@ void Client::LoadWaipointConfig(const std::string& FileName, MapperType FarmType
 		case 2:
 		case 3: {
 			this->fishingWaipont.push_back(waipoint);
+			break;
+		}
+		case 5:
+		case 6: {
+			this->oreWaipont.push_back(waipoint);
 			break;
 		}
 		default:
@@ -726,10 +857,16 @@ void Client::LoadWaipointConfig(const std::string& FileName, MapperType FarmType
 		this->bAutoFishingPopup = true;
 		break;
 	}
-
+	case 5:
+	case 6: {
+		findNearest(this->oreWaipont, playerPos, MapperType::Ore);
+		this->bAutoOreFarmPopup = true;
+		break;
+	}
 	default:
 		break;
 	}
+	Notification::Notification(this->Login.c_str(), "Config loaded");
 }
 
 void Client::findNearest(std::vector<Waipoint>& vectors, const Vector3& location, const MapperType mapperType) {
@@ -755,6 +892,14 @@ void Client::findNearest(std::vector<Waipoint>& vectors, const Vector3& location
 			}
 			break;
 		}
+		case 5:
+		case 6: {
+			if (filter.mapperType == OreWalk || filter.mapperType == Ore) {
+				filtred.push_back(filter);
+			}
+			break;
+		}
+
 		default:
 			break;
 		}
@@ -783,12 +928,18 @@ void Client::findNearest(std::vector<Waipoint>& vectors, const Vector3& location
 	{
 	case 0: //wood
 	case 1: {
-
+		this->woodIndex = nearest.index;
 		break;
 	}
 	case 2://fishing
 	case 3: {
 		this->fishingIndex = nearest.index;
+		break;
+	}
+
+	case 5:
+	case 6: {
+		this->oreIndex = nearest.index;
 		break;
 	}
 	default:
