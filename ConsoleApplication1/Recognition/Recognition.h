@@ -14,7 +14,13 @@ enum ImageType {
 	EnemyLocked = 6,
 	fishiIcon = 7,
 	fishingRood = 8,
-	fishingWait = 9
+	fishingWait = 9,
+	cleanSlotInv = 10,
+
+
+	failSellText = 97,
+	sellText = 98,
+	sellButton = 99
 };
 
 
@@ -67,8 +73,15 @@ inline std::vector<std::pair<std::string, ImageType>> Images{
 { "C:\\RavendawnBot\\enemy_find.png", ImageType::EnemyDetected }, { "C:\\RavendawnBot\\enemy_locked.png", ImageType::EnemyLocked },
 
 { "C:\\RavendawnBot\\fishing_icon0.png", ImageType::fishiIcon }, { "C:\\RavendawnBot\\fishing_icon1.png", ImageType::fishiIcon },
+{ "C:\\RavendawnBot\\fishing_icon2.png", ImageType::fishiIcon },
 { "C:\\RavendawnBot\\fishing_rood.png", ImageType::fishingRood }, { "C:\\RavendawnBot\\fishing_wait0.png", ImageType::fishingWait },
-{ "C:\\RavendawnBot\\fishing_wait1.png", ImageType::fishingWait }, { "C:\\RavendawnBot\\fishing_wait2.png", ImageType::fishingWait }
+{ "C:\\RavendawnBot\\fishing_wait1.png", ImageType::fishingWait }, { "C:\\RavendawnBot\\fishing_wait2.png", ImageType::fishingWait },
+
+{ "C:\\RavendawnBot\\donthavefishi.png", ImageType::failSellText },
+{ "C:\\RavendawnBot\\sell_fish.png", ImageType::sellText },
+{ "C:\\RavendawnBot\\sell_button.png", ImageType::sellButton },
+
+{ "C:\\RavendawnBot\\inventory.png", ImageType::cleanSlotInv}
 
 };
 
