@@ -659,6 +659,37 @@ void gui() {
 								}
 							}
 
+							if (!client.bOreFarm) {
+								if (ImGui::Button("Farm Ore")) {
+									client.bAutoOreFarmPopup = true;
+								}
+
+								if (client.bAutoOreFarmPopup) {
+									ImGui::OpenPopup("Auto Farm Ore");
+									client.bAutoOreFarmPopup = false;
+								}
+
+								if (ImGui::BeginPopup("Auto Farm Ore")) {
+									ListarArquivos("C:\\RavendawnBot\\Farms\\Ore", client, MapperType::Ore);
+									if (ImGui::Button("Start Farm Ore")) {
+										client.bOreFarm = true;
+										ClientsFarm.push_back(&client);
+									}
+									ImGui::EndPopup();
+								}
+							}
+							else
+							{
+								if (ImGui::Button("Stop Ore Farm")) {
+									auto it = std::find_if(ClientsFarm.begin(), ClientsFarm.end(), [client](const Client* obj) {
+										return obj->PID == client.PID;
+										});
+									ClientsFarm.erase(it);
+									client.bOreFarm = false;
+									client.bAutoOreFarmPopup = false;
+								}
+							}
+
 							POINT cursorPos{};
 							GetCursorPos(&cursorPos);
 
@@ -971,6 +1002,7 @@ void gui() {
 
 							if (ImGui::Button("Clear")) {
 								mapper.waipoint.clear();
+								mapper.maxIndex = -1;
 							}
 
 							ImGui::SameLine();
@@ -1005,6 +1037,14 @@ void gui() {
 								}
 								case 4: {
 									map.mapperType = MapperType::npc;
+									break;
+								}
+								case 5: {
+									map.mapperType = MapperType::Ore;
+									break;
+								}
+								case 6: {
+									map.mapperType = MapperType::OreWalk;
 									break;
 								}
 								default:
@@ -1047,6 +1087,12 @@ void gui() {
 									case 3: {
 										FarmTypeFile = "Fishi";
 									}
+									case 5:
+									case 6: {
+										FarmTypeFile = "Ore";
+										break;
+									}
+
 									default:
 										break;
 									}
@@ -1067,7 +1113,7 @@ void gui() {
 								{
 								case 0:
 								case 1: {
-									if ((mapper_.mapperType == MapperType::Fishi || mapper_.mapperType == MapperType::WalkFishi)) {
+									if (!(mapper_.mapperType == MapperType::WalkWood || mapper_.mapperType == MapperType::Wood)) {
 										continue;
 									}
 									break;
@@ -1075,7 +1121,15 @@ void gui() {
 
 								case 2:
 								case 3: {
-									if ((mapper_.mapperType == MapperType::WalkWood || mapper_.mapperType == MapperType::Wood)) {
+									if (!(mapper_.mapperType == MapperType::Fishi || mapper_.mapperType == MapperType::WalkFishi)) {
+										continue;
+									}
+									break;
+								}
+
+								case 5:
+								case 6: {
+									if (!(mapper_.mapperType == MapperType::OreWalk || mapper_.mapperType == MapperType::Ore)) {
 										continue;
 									}
 									break;
@@ -1108,11 +1162,21 @@ void gui() {
 									typ = "npc";
 									break;
 								}
+								case 5: {
+									typ = "ore";
+									break;
+								}
+								case 6: {
+									typ = "OreWal";
+									break;
+								}
 								default:
 									break;
 								}
 
 								ImGui::Text("MapperType: %s MapperXYZ: %d %d %d", typ.c_str(), mapper_.Pos.x, mapper_.Pos.y, mapper_.Pos.z);
+								ImGui::SameLine();
+								ImGui::Button("Edit");
 								//ImGui::SameLine();
 							}
 						}
