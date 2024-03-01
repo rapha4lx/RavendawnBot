@@ -8,6 +8,129 @@
 #include <opencv2/dnn/dnn.hpp>
 
 
+
+bool Recognition::testefishi(HWND& hWnd, ImageType imageType, double threshold, bool debug) {
+	try {
+		RECT rect;
+		GetClientRect(hWnd, &rect);
+		int width = rect.right;
+		int height = rect.bottom;
+
+		HDC hdcScreen = GetDC(hWnd);
+		if (!hdcScreen)
+			return false;
+
+		HDC hdcMem = CreateCompatibleDC(hdcScreen);
+		if (!hdcMem) {
+			ReleaseDC(hWnd, hdcScreen);
+			return false;
+		}
+
+		HBITMAP hBitmap = CreateCompatibleBitmap(hdcScreen, width, height);
+		if (!hBitmap) {
+			ReleaseDC(hWnd, hdcScreen);
+			DeleteDC(hdcMem);
+			return false;
+		}
+
+		SelectObject(hdcMem, hBitmap);
+
+		if (!BitBlt(hdcMem, 0, 0, width, height, hdcScreen, 0, 0, SRCCOPY)) {
+			ReleaseDC(hWnd, hdcScreen);
+			DeleteDC(hdcMem);
+			DeleteObject(hBitmap);
+			return false;
+		}
+
+		ReleaseDC(hWnd, hdcScreen);
+		DeleteDC(hdcMem);
+
+		cv::Mat screenShot(height, width, CV_8UC3);
+		if (screenShot.empty()) {
+			DeleteObject(hBitmap);
+			return false;
+		}
+
+		BITMAPINFOHEADER bi;
+		bi.biSize = sizeof(BITMAPINFOHEADER);
+		bi.biWidth = width;
+		bi.biHeight = -height;
+		bi.biPlanes = 1;
+		bi.biBitCount = 24;
+		bi.biCompression = BI_RGB;
+		bi.biSizeImage = 0;
+		bi.biXPelsPerMeter = 0;
+		bi.biYPelsPerMeter = 0;
+		bi.biClrUsed = 0;
+		bi.biClrImportant = 0;
+
+		GetDIBits(hdcScreen, hBitmap, 0, height, screenShot.data, (BITMAPINFO*)&bi, DIB_RGB_COLORS);
+
+		DeleteObject(hBitmap);
+
+		cv::resize(screenShot, screenShot, cv::Size(screenShot.cols / 2, screenShot.rows / 2)); // Reduz a resolução pela metade
+
+		for (auto& image : Images) {
+			if (image.second != imageType)
+				continue;
+
+			cv::Mat subImage = cv::imread(image.first);
+			if (subImage.empty())
+				continue;
+
+			cv::Mat resultImage;
+			cv::matchTemplate(screenShot, subImage, resultImage, cv::TM_CCOEFF_NORMED);
+
+			cv::Mat thresholdedImage;
+			cv::threshold(resultImage, thresholdedImage, threshold, 1.0, cv::THRESH_TOZERO);
+
+			std::vector<cv::Point> locations;
+			cv::findNonZero(thresholdedImage, locations);
+
+			if (!locations.empty()) {
+				if (debug) {
+					for (const auto& loc : locations) {
+						cv::rectangle(screenShot, loc, cv::Point(loc.x + subImage.cols, loc.y + subImage.rows), cv::Scalar(0, 255, 0), 2);
+						int centerX = loc.x + subImage.cols / 2;
+						int centerY = loc.y + subImage.rows / 2;
+						cv::Point center(centerX, centerY);
+						cv::circle(screenShot, center, 5, cv::Scalar(0, 0, 255), -1);
+					}
+				}
+
+				if (debug) {
+					cv::namedWindow("Debug", cv::WINDOW_NORMAL);
+					cv::imshow("Debug", screenShot);
+					if (cv::waitKey(1) == 'q') {
+						screenShot.release();
+						subImage.release();
+						resultImage.release();
+						thresholdedImage.release();
+						return false;
+					}
+				}
+
+				return true; // Encontrou padrão
+			}
+
+			subImage.release();
+			resultImage.release();
+			thresholdedImage.release();
+		}
+
+		screenShot.release();
+		return false; // Não encontrou padrão
+	}
+	catch (const std::exception& e) {
+		std::cerr << "Exceção capturada: " << e.what() << std::endl;
+	}
+	catch (const cv::Exception& e) {
+		std::cerr << "Exceção capturada: " << e.what() << std::endl;
+	}
+	return false;
+}
+
+
 bool Recognition::CustomRecognition(HWND& hWnd, ImageType imageType, double threshold, bool debug) {
 	try
 	{
