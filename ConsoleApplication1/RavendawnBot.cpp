@@ -128,7 +128,7 @@ void UpdateAccounts() {
 	}
 	file_json.close();
 
-	int size = json["Accounts"].size();
+	int size = json["Accounts"][0].size();
 
 	char* buffer{ nullptr };
 	size_t sz{ 0 };
@@ -140,7 +140,7 @@ void UpdateAccounts() {
 	std::string sourceDir{ (std::string)(buffer)+"\\AppData\\Roaming\\Ravendawn\\ravendawn" };
 	for (int i = 0; i < size; i++) {
 		Client proces;
-		proces = json["Accounts"][i];
+		proces = json["Accounts"][0][i];
 
 		std::string name{ proces.Login };
 		std::string nick{ proces.charPerson.Nick };
@@ -152,7 +152,7 @@ void UpdateAccounts() {
 		if (proces.hWnd != NULL) {
 			proces.logged = true;
 			GetWindowThreadProcessId(proces.hWnd, &proces.PID);
-			proces.open_handle();
+			//proces.open_handle();
 			MoveWindow(proces.hWnd, 0, 0, 0, 0, TRUE);
 		}
 
@@ -208,40 +208,40 @@ void onMouse(int event, int x, int y, int flags, void* userdata) {
 	{
 	case cv::EVENT_LBUTTONDBLCLK: {
 		//std::cout << "Clique esquerdo detectado em: (" << x << ", " << y << ")" << std::endl;
-		//movements.push_back({ params->PID, false, false, NULL, event, {x, y} });
+		movements.push_back({ params->PID, false, false, NULL, event, {x, y} });
 		break;
 	}
 
 	case cv::EVENT_LBUTTONDOWN: {
 		//std::cout << "Clique esquerdo detectado em: (" << x << ", " << y << ")" << std::endl;
-		//movements.push_back({ params->PID, false, false, NULL, event, {x, y} });
-		SendMessage(params->hWnd, WM_MOUSEMOVE, 0, MAKELPARAM(x, y)); // x e y são as coordenadas do clique
-		std::this_thread::sleep_for(std::chrono::milliseconds(300));
+		movements.push_back({ params->PID, false, false, NULL, event, {x, y} });
+		//SendMessage(params->hWnd, WM_MOUSEMOVE, 0, MAKELPARAM(x, y)); // x e y são as coordenadas do clique
+		/*std::this_thread::sleep_for(std::chrono::milliseconds(300));
 		SendMessage(params->hWnd, WM_LBUTTONDOWN, MK_LBUTTON, 0);
-		SendMessage(params->hWnd, WM_LBUTTONUP, MK_LBUTTON, 0);
+		SendMessage(params->hWnd, WM_LBUTTONUP, MK_LBUTTON, 0);*/
 		break;
 	}
 
 	case cv::EVENT_LBUTTONUP: {
 		//std::cout << "Clique esquerdo detectado em: (" << x << ", " << y << ")" << std::endl;
-		//movements.push_back({ params->PID, false, false, NULL, event, {x, y} });
+		movements.push_back({ params->PID, false, false, NULL, event, {x, y} });
 		break;
 	}
 
 	case cv::EVENT_RBUTTONDBLCLK: {
 		//std::cout << "Clique direito detectado em: (" << x << ", " << y << ")" << std::endl;
-		//movements.push_back({ params->PID, false, false, NULL, event, {x, y} });
+		movements.push_back({ params->PID, false, false, NULL, event, {x, y} });
 		break;
 	}
 
 	case cv::EVENT_MOUSEWHEEL: {
 		if (flags > 0) {
 			//std::cout << "MouseWheel para cima detectado" << std::endl;
-			//movements.push_back({ params->PID, false, false, NULL, event, {0, -1} });
+			movements.push_back({ params->PID, false, false, NULL, event, {0, -1} });
 		}
 		else if (flags < 0) {
 			//std::cout << "MouseWheel para baixo detectado" << std::endl;
-			//movements.push_back({ params->PID, false, false, NULL, event, {0, 1} });
+			movements.push_back({ params->PID, false, false, NULL, event, {0, 1} });
 		}
 		break;
 	}
@@ -249,13 +249,13 @@ void onMouse(int event, int x, int y, int flags, void* userdata) {
 	case cv::EVENT_MOUSEMOVE: {
 		if ((x - lastMousePosition.x) > 10 || (x - lastMousePosition.x) < -10) {
 			//std::cout << "Mouse move detectado em: (" << x << ", " << y << ")" << std::endl;
-			/*movements.push_back({ params->PID, false, false, NULL, event, {x, y} });
-			lastMousePosition = { x, y };*/
+			movements.push_back({ params->PID, false, false, NULL, event, {x, y} });
+			lastMousePosition = { x, y };
 		}
 		else if ((x - lastMousePosition.x) > 10 || (x - lastMousePosition.x) < -10) {
 			//std::cout << "Mouse move detectado em: (" << x << ", " << y << ")" << std::endl;
-			/*movements.push_back({ params->PID, false, false, NULL, event, {x, y} });
-			lastMousePosition = { x, y };*/
+			movements.push_back({ params->PID, false, false, NULL, event, {x, y} });
+			lastMousePosition = { x, y };
 		}
 		break;
 	}
@@ -503,14 +503,14 @@ void gui() {
 					std::ofstream json_account("C:\\Ravendawn accounts.json");
 
 					Client account;
-
 					account.charPerson.Nick = Nick;
 					account.Email = Email;
 					account.Pass = Pass;
 					account.Login = Login;
 
+					Clients.push_back(account);
 					nlohmann::json json;
-					json["Accounts"].push_back(account);
+					json["Accounts"].push_back(Clients);
 
 					json_account << std::setw(4) << json << std::endl;
 					json_account.close();
@@ -535,6 +535,46 @@ void gui() {
 						}
 
 						ImGui::Text(client.logged ? "on" : "off");
+						//ImGui::SameLine(textSize.x + 40.20);
+						if (ImGui::Button("Edit")) {
+							client.bEditPerson = true;
+						}
+
+						if (ImGui::Button("Open Handle")) {
+							client.open_handle();
+						}
+
+						if (ImGui::Button("Close Handle")) {
+							client.close_handle();
+						}
+
+						if (client.bEditPerson) {
+							ImGui::OpenPopup("Edit Popup");
+							client.bEditPerson = false;
+						}
+						
+						if (ImGui::BeginPopup("Edit Popup")) {
+
+							for (int i = 0; i < 12; i++) {
+								std::string skillNumber = "Skill " + std::to_string( i);
+
+								ImGui::SliderFloat(skillNumber.c_str(), & client.charPerson.skills[i].cooldown, 0, 60, "%.1f");
+								ImGui::Checkbox((skillNumber + "Usable?").c_str(), &client.charPerson.skills[i].bUsable);
+								ImGui::Checkbox((skillNumber + "heal Skill?").c_str(), &client.charPerson.skills[i].healSkill);
+							}
+
+							if (ImGui::MenuItem("Save")) {
+								std::ofstream json_account("C:\\Ravendawn accounts.json");
+
+								nlohmann::json json;
+								json["Accounts"].push_back(Clients);
+
+								json_account << std::setw(4) << json << std::endl;
+								json_account.close();
+							}
+
+							ImGui::EndPopup();
+						}
 
 						if (client.logged) {
 							ImGui::Checkbox("bDebug", &client.bDebug);
@@ -700,11 +740,14 @@ void gui() {
 
 							ImGui::Text("X: %d \\ Y: %d", cursorPos.x /*- windowRect.right / 2*/, cursorPos.y /*- windowRect.bottom / 2*/);
 							ImGui::Text("WindowPosX: %d \\ WindowPosY: %d", windowRect.left, windowRect.top);
-							ImGui::Text("life: %d ", client.read<int>(client.LocalPlayer + 0xDDC));
-							ImGui::Text("Player Position: X:%d Y:%d Z:%d",
+							ImGui::Text("life: %lf ", client.getHealth());
+							//std::cout << "Life: %lf " << client.read<int>(client.LocalPlayer + /*0xDDC*/ 0xCE0) << std::endl;
+							/*ImGui::Text("Player Position: X:%d Y:%d Z:%d",
 								client.read<int>(client.BaseAddress + 0x27CCC1C),
 								client.read<int>(client.BaseAddress + 0x27CCC20),
-								client.read<int>(client.BaseAddress + 0x27CC498));
+								client.read<int>(client.BaseAddress + 0x27CC498));*/
+
+							ImGui::Text("Interaction: %d // invValue: %d", client.getWoodInteraction(), client.getInvValue());
 
 							if (ImGui::Button("Take Print")) {
 								RECT rect;
@@ -1086,6 +1129,7 @@ void gui() {
 									case 2:
 									case 3: {
 										FarmTypeFile = "Fishi";
+										break;
 									}
 									case 5:
 									case 6: {
@@ -1426,16 +1470,10 @@ int main(int, char**)
 		//	}
 		//}
 
-		//for (auto& movement : movements) {
-
-		//	if (bDisableAllSync) {
-		//		movements.erase(movements.begin());
-		//		break;
-		//	}
-
+		//if (GetAsyncKeyState(0x46) < 0) {
 		//	for (auto& client : Clients) {
 		//		if (!client.logged) {
-		//			std::this_thread::sleep_for(std::chrono::milliseconds(1));
+		//			//std::this_thread::sleep_for(std::chrono::milliseconds(1));
 		//			continue;
 		//		}
 
@@ -1443,12 +1481,38 @@ int main(int, char**)
 		//			continue;
 		//		}
 
+		//		PostMessage(client.hWnd, WM_KEYDOWN, 0x46, 0);
+		//		std::this_thread::sleep_for(std::chrono::milliseconds(1));
+		//		PostMessage(client.hWnd, WM_KEYUP, 0x46, 0);
+		//	}
+		//}
+
+		//for (auto& movement : movements) {
+
+		//	if (bDisableAllSync) {
+		//		movements.erase(movements.begin());
+		//		std::this_thread::sleep_for(std::chrono::milliseconds(3));
+		//		break;
+		//	}
+
+		//	for (auto& client : Clients) {
+		//		if (!client.logged) {
+		//			//std::this_thread::sleep_for(std::chrono::milliseconds(1));
+		//			continue;
+		//		}
+
+		//		if (!client.bSyncMovement) {
+		//			continue;
+		//		}
+
+		//		
+
 		//		if (GetAsyncKeyState(VK_CAPITAL) < 0) {
 		//			if (movement.PID != client.PID) {
 		//				continue;
 		//			}
 
-		//			if (movement.key != NULL) {
+		//			/*if (movement.key != NULL) {
 		//				if (!movement.keyUp) {
 		//					PostMessage(client.hWnd, WM_KEYDOWN, movement.key, 0);
 		//				}
@@ -1457,7 +1521,7 @@ int main(int, char**)
 		//					PostMessage(client.hWnd, WM_KEYUP, movement.key, 0);
 		//				}
 		//				continue;
-		//			}
+		//			}*/
 
 		//			switch (movement.event)
 		//			{
@@ -1508,7 +1572,7 @@ int main(int, char**)
 		//			}
 		//		}
 
-		//		if (movement.key != NULL) {
+		//		/*if (movement.key != NULL) {
 		//			if (!movement.keyUp) {
 		//				PostMessage(client.hWnd, WM_KEYDOWN, movement.key, 0);
 		//			}
@@ -1517,7 +1581,7 @@ int main(int, char**)
 		//				PostMessage(client.hWnd, WM_KEYUP, movement.key, 0);
 		//			}
 		//			continue;
-		//		}
+		//		}*/
 
 		//		switch (movement.event)
 		//		{
@@ -1568,6 +1632,7 @@ int main(int, char**)
 		//		}
 		//	}
 		//	movements.erase(movements.begin());
+		//	//std::this_thread::sleep_for(std::chrono::milliseconds(3));
 		//}
 
 		std::this_thread::sleep_for(std::chrono::milliseconds(100));
