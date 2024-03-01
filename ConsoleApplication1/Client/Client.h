@@ -166,7 +166,16 @@ public:
 	class CharPerson {
 	public:
 		std::string Nick{ NULL };
-		float skillCooldown[12]{ 0, 0,0,0,0,0,0,0,0,0,0,0 };
+		class Skills {
+		public:
+			float cooldown{ 0 };
+			std::chrono::steady_clock::time_point cooldownTime;
+			bool bUsable{ false };
+			bool healSkill{ false };
+
+		private:
+		};
+		Skills skills[12];
 	};
 
 	CharPerson charPerson;
@@ -175,8 +184,17 @@ public:
 	friend void to_json(nlohmann::json& j, const Client& account) {
 		j = nlohmann::json{ {"Login", account.Login }, {"Pass", account.Pass},
 			{"Email" , account.Email}, {"Nick" , account.charPerson.Nick}, //CharPerson
-			{"SkillCooldown" , account.charPerson.skillCooldown}
+			{"skills" , nlohmann::json::array()}
 		};
+
+		for (int i = 0; i < 12; i++) {
+			j["skills"][i] = nlohmann::json{
+				{"cooldown", account.charPerson.skills[i].cooldown},
+				{"usable", account.charPerson.skills[i].bUsable},
+				{"healSkill", account.charPerson.skills[i].healSkill},
+				{"cooldownTime", account.charPerson.skills[i].cooldownTime.time_since_epoch().count()} // Converte para um tipo serializável
+			};
+		}
 	}
 
 	// Operador de extração para converter JSON para objeto da classe
@@ -185,10 +203,25 @@ public:
 		j.at("Pass").get_to(account.Pass);
 		j.at("Email").get_to(account.Email);
 		j.at("Nick").get_to(account.charPerson.Nick);
-		j.at("SkillCooldown").get_to(account.charPerson.skillCooldown);
+		//j.at("CharPerson").at().get_to(account.charPerson);
+		if (j.contains("skills")) {
+			auto& skillsArray = j.at("skills");
+			for (int i = 0; i < 11 /*&& i < skillsArray.size()*/; ++i) {
+				skillsArray[i].at("cooldown").get_to(account.charPerson.skills[i].cooldown);
+				skillsArray[i].at("usable").get_to(account.charPerson.skills[i].bUsable);
+				skillsArray[i].at("healSkill").get_to(account.charPerson.skills[i].healSkill);
+				if (!skillsArray[i].contains("cooldownTime")) {
+					account.charPerson.skills[i].cooldownTime = std::chrono::steady_clock::now();
+				}
+				else
+				{
+					account.charPerson.skills[i].cooldownTime = std::chrono::steady_clock::time_point(std::chrono::steady_clock::duration(skillsArray[i].at("cooldownTime").get<int64_t>())); // Converte de volta para time_point
+				}
+			}
+		}
 	}
 
-	void move(int &x, int &y, int &z);
+	void move(int x, int y, int z);
 
 
 	//Auto solve task
@@ -196,7 +229,7 @@ public:
 	bool bAutoTask{ false };
 
 	//char attack
-	void AutoAttack();
+	void AutoAttack(bool bOnlyHeal = false);
 	bool bAutoAttack{ false };
 	bool bAutoAttackMove{ false };
 	std::chrono::steady_clock::time_point lastAutoAttackMoveTime;
@@ -280,10 +313,18 @@ public:
 	void LoadWaipointConfig(const std::string& FileName, MapperType FarmType);
 
 	//ui
+	bool bEditPerson{ false };
 	bool bAutoFishingPopup{ false };
 	bool bAutoWoodFarmPopup{ false };
 	bool bAutoOreFarmPopup{ false };
 	bool bShowSavePopup{ false };
+
+	//Client Memory
+	double getHealth();
+	double getMaxHealth();
+	int getWoodInteraction();
+	int getInvValue();
+	int getAttacking();
 
 private:
 	double distance(const Vector3& v1, const Vector3& v2) {
@@ -317,4 +358,3 @@ namespace ClientNamespace {
 	void RunFarm();
 	inline std::thread FarmThread(RunFarm);
 }
-
