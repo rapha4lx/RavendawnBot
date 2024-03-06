@@ -42,6 +42,12 @@
     <ClCompile Include="Notification\Notification.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Recognition\Recognition.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Client\Client.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ImGui\imconfig.h">
@@ -1260,6 +1266,15 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Notification\Notification.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Recognition\Recognition.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Client\Client.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="RavendawnBot.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

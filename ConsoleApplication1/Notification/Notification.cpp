@@ -18,7 +18,7 @@ void Notification::Initialize() {
     trayIcon.uFlags = NIF_ICON | NIF_MESSAGE | NIF_TIP;
     trayIcon.uCallbackMessage = WM_USER + 1; // Mensagem que será enviada para a janela quando o usuário interagir com o ícone
     trayIcon.hIcon = LoadIcon(NULL, IDI_INFORMATION); // Ícone para a notificação
-    strcpy_s(trayIcon.szTip, "Minecraft_Bot"); // Texto da dica ao passar o mouse sobre o ícone
+    strcpy_s(trayIcon.szTip, "Ravendawn Bot"); // Texto da dica ao passar o mouse sobre o ícone
 
     // Registra o ícone na bandeja do sistema
     Shell_NotifyIcon(NIM_ADD, &trayIcon);
