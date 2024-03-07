@@ -15,13 +15,6 @@
 
 #pragma comment (lib, "ntdll.lib")
 
-enum FindPos {
-	up = 0,
-	down = 1,
-	left = 2,
-	right = 3
-};
-
 enum MapperType {
 	Wood = 0,
 	WalkWood = 1,
@@ -29,7 +22,10 @@ enum MapperType {
 	WalkFishi = 3,
 	npc = 4,
 	Ore = 5,
-	OreWalk = 6
+	OreWalk = 6,
+	returning = 7,
+	returningEnd = 8,
+	caveWalk = 9
 };
 
 struct Vector3 {
@@ -166,6 +162,7 @@ public:
 	class CharPerson {
 	public:
 		std::string Nick{ NULL };
+
 		class Skills {
 		public:
 			float cooldown{ 0 };
@@ -222,7 +219,7 @@ public:
 	}
 
 	void move(int x, int y, int z);
-
+	void pressNumpadKey(int number);
 
 	//Auto solve task
 	void AutoTask();
@@ -242,7 +239,6 @@ public:
 	int fishingIndex{ -1 };
 	bool bAutoFishing{ false };
 	bool bFishingAutoMove{ false };
-	FindPos findFishingPos{ FindPos::down };
 	std::chrono::steady_clock::time_point lastFishingMovement;
 	std::chrono::steady_clock::time_point lastFirstFishingHabilit;
 	std::chrono::steady_clock::time_point lastThirtFishingHabilit;
@@ -251,13 +247,9 @@ public:
 	void NextFishingPosition();
 	bool bFishingIncreseDecreseIndex{ true };
 
-
-
-
 	//Wood Farm
 	void FarmWood();
 	std::vector<Waipoint> woodWaipont;
-	FindPos farmPosition{ FindPos::down };
 	int woodIndex{ -1 };
 	int woodFarmStage{ 0 };
 	int woodErrorCount{ 0 };
@@ -266,7 +258,6 @@ public:
 	std::chrono::steady_clock::time_point changeFarmPositionTime;
 	void NextWoodPosition();
 	bool bWoodIncreseDecreseIndex{ true };
-
 
 	//Ore Farm
 	void FarmOre();
@@ -278,12 +269,27 @@ public:
 	void NextOrePosition();
 	bool bOreIncreseDecreseIndex{ true };
 
+	//Return Farm
+	bool bNeedReturning{ false };
+	bool bReturnIncreseDecreseIndex{ true };
+	int returnIndex{ -1 };
+	std::vector<Waipoint> returnWaipont;
+	void CheckIfHasReturnFile();
+	void NextReturningPosition();
+	void Returning();
+	std::string lastMapper;
+
+	//cave Farm
+	void CaveFarm();
+	bool bCaveBot{ false };
+	bool bCaveBotIncreseDecreseIndex{ true };
+	std::vector<Waipoint> cavebotWaipoint;
+	int cavebotIndex{ -1 };
+	std::chrono::steady_clock::time_point lastCaveFarm;
+	void NextCavePosition();
 
 
 	void DisableAllFarmsFunctions();
-
-	cv::Mat	oldPlayerPos;
-
 
 	bool open_handle() noexcept;
 
@@ -296,7 +302,8 @@ public:
 		NTSTATUS status = NtReadVirtualMemory(this->handle, reinterpret_cast<PVOID>(addr), &value, sizeof(T), 0);
 		// Basic Error Handling
 		if (status != 0) {
-			std::cout << "ERROR - Failed to read value" << std::endl;
+			//std::cout << "ERROR - Failed to read value" << std::endl;
+			//MessageBox(0, "Failed to read value", 0, 0);
 		}
 		return value;
 	}
@@ -304,9 +311,7 @@ public:
 	void findNearest(std::vector<Waipoint>& vectors, const Vector3& location, const MapperType mapperType);
 
 	~Client() {
-		oldPlayerPos.release();
-		//close_handle();
-
+		close_handle();
 	};
 
 
@@ -317,9 +322,11 @@ public:
 	bool bAutoFishingPopup{ false };
 	bool bAutoWoodFarmPopup{ false };
 	bool bAutoOreFarmPopup{ false };
+	bool bCavebotPopup{ false };
 	bool bShowSavePopup{ false };
 
 	//Client Memory
+	ULONG_PTR getLocalPlayer();
 	double getHealth();
 	double getMaxHealth();
 	int getWoodInteraction();
@@ -341,20 +348,15 @@ public:
 	~Mapper();
 };
 
-inline std::vector<Client> Clients;
-inline std::vector<Client*> ClientsFarm;
+inline Client client;
 
 inline const char* mapperTypeIndex[]{
 	"Wood", "WalkWood",
 	"Fishi", "WalkFishi",
-	"npc", "Ore", "OreWalk"
+	"npc", "Ore", "OreWalk",
+	"Returning", "returningEnd",
+	"CaveWalk"
 };
 inline int mapperIndex{ 0 };
 
 inline Mapper mapper;
-
-#include <thread>
-namespace ClientNamespace {
-	void RunFarm();
-	inline std::thread FarmThread(RunFarm);
-}

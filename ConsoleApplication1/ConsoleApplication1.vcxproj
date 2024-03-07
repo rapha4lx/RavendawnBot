@@ -73,9 +73,11 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LibraryPath>C:\Program Files (x86)\Microsoft DirectX SDK (June 2010)\Lib\x64;$(LibraryPath)</LibraryPath>
+    <TargetName>RavendawnFull</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LibraryPath>C:\Program Files (x86)\Microsoft DirectX SDK (June 2010)\Lib\x64;$(LibraryPath)</LibraryPath>
+    <TargetName>RavendawnFull</TargetName>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -111,12 +113,14 @@
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>$(DXSDK_DIR)Include;$(SolutionDir)ConsoleApplication1\Imports</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(DXSDK_DIR)Include;$(SolutionDir)ConsoleApplication1\Imports;$(SolutionDir)ConsoleApplication1\Imports\curl\x64 release\include;$(SolutionDir)ConsoleApplication1\Imports\json\json</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>d3d9.lib;d3dx9.lib;opencv_world490d.lib;$(CoreLibraryDependencies);%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>$(DXSDK_DIR)Lib\x64\d3d11.lib;$(SolutionDir)\ConsoleApplication1\Imports\opencv2\lib\opencv_world490d.lib;version.lib;$(SolutionDir)ConsoleApplication1\Imports\curl\x64 release\lib\libcurl_a.lib;$(CoreLibraryDependencies);%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(SolutionDir)ConsoleApplication1\Imports\opencv2\build\lib</AdditionalLibraryDirectories>
       <SubSystem>Console</SubSystem>
+      <UACExecutionLevel>RequireAdministrator</UACExecutionLevel>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -125,41 +129,60 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>RELEASE;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(DXSDK_DIR)Include;$(SolutionDir)ConsoleApplication1\Imports</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(DXSDK_DIR)Include;$(SolutionDir)ConsoleApplication1\Imports;$(SolutionDir)ConsoleApplication1\Imports\curl\x64 release\include;$(SolutionDir)ConsoleApplication1\Imports\json\json</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
-      <SubSystem>Console</SubSystem>
+      <SubSystem>Windows</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>d3d9.lib;d3dx9.lib;C:\Users\kelyl\source\repos\ConsoleApplication1\ConsoleApplication1\Imports\opencv2\lib\opencv_world490.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>$(DXSDK_DIR)Lib\x64\d3d11.lib;$(SolutionDir)\ConsoleApplication1\Imports\opencv2\lib\opencv_world490.lib;version.lib;$(SolutionDir)ConsoleApplication1\Imports\curl\x64 release\lib\libcurl_a.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <UACExecutionLevel>RequireAdministrator</UACExecutionLevel>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Client\Client.cpp" />
+    <ClCompile Include="connection\Connection.cpp" />
+    <ClCompile Include="ImGui\imgui_impl_dx11.cpp" />
+    <ClCompile Include="Imports\json\dist\jsoncpp.cpp" />
+    <ClCompile Include="Protection\antiDebug\antiDebug.cpp" />
     <ClCompile Include="RavendawnBot.cpp" />
     <ClCompile Include="ImGui\imgui.cpp" />
     <ClCompile Include="ImGui\imgui_demo.cpp" />
     <ClCompile Include="ImGui\imgui_draw.cpp" />
-    <ClCompile Include="ImGui\imgui_impl_dx9.cpp" />
     <ClCompile Include="ImGui\imgui_impl_win32.cpp" />
     <ClCompile Include="ImGui\imgui_tables.cpp" />
     <ClCompile Include="ImGui\imgui_widgets.cpp" />
     <ClCompile Include="Notification\Notification.cpp" />
     <ClCompile Include="Recognition\Recognition.cpp" />
+    <ClCompile Include="UI\Drawng.cpp" />
+    <ClCompile Include="UI\UI.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Client\Client.h" />
+    <ClInclude Include="connection\Connection.h" />
     <ClInclude Include="ImGui\imconfig.h" />
     <ClInclude Include="ImGui\imgui.h" />
-    <ClInclude Include="ImGui\imgui_impl_dx9.h" />
+    <ClInclude Include="ImGui\imgui_impl_dx11.h" />
     <ClInclude Include="ImGui\imgui_impl_win32.h" />
     <ClInclude Include="ImGui\imgui_internal.h" />
     <ClInclude Include="ImGui\imstb_rectpack.h" />
     <ClInclude Include="ImGui\imstb_textedit.h" />
     <ClInclude Include="ImGui\imstb_truetype.h" />
+    <ClInclude Include="Imports\json\dist\json\json-forwards.h" />
+    <ClInclude Include="Imports\json\dist\json\json.h" />
+    <ClInclude Include="Imports\json\json\allocator.h" />
+    <ClInclude Include="Imports\json\json\assertions.h" />
+    <ClInclude Include="Imports\json\json\config.h" />
+    <ClInclude Include="Imports\json\json\forwards.h" />
+    <ClInclude Include="Imports\json\json\json.h" />
+    <ClInclude Include="Imports\json\json\json_features.h" />
+    <ClInclude Include="Imports\json\json\reader.h" />
+    <ClInclude Include="Imports\json\json\value.h" />
+    <ClInclude Include="Imports\json\json\version.h" />
+    <ClInclude Include="Imports\json\json\writer.h" />
     <ClInclude Include="Imports\nlohmann\adl_serializer.hpp" />
     <ClInclude Include="Imports\nlohmann\byte_container_with_subtype.hpp" />
     <ClInclude Include="Imports\nlohmann\detail\abi_macros.hpp" />
@@ -558,8 +581,12 @@
     <ClInclude Include="Imports\opencv2\video\video.hpp" />
     <ClInclude Include="Imports\opencv2\world.hpp" />
     <ClInclude Include="Notification\Notification.h" />
+    <ClInclude Include="Protection\antiDebug\antiDebug.h" />
+    <ClInclude Include="Protection\xorstr.hpp" />
     <ClInclude Include="RavendawnBot.h" />
     <ClInclude Include="Recognition\Recognition.h" />
+    <ClInclude Include="UI\Drawing.h" />
+    <ClInclude Include="UI\UI.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

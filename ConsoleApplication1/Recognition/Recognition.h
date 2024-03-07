@@ -25,7 +25,14 @@ enum ImageType {
 	error_mining = 96,
 	failSellText = 97,
 	sellText = 98,
-	sellButton = 99
+	sellButton = 99,
+
+
+
+
+
+	death_screen = 120,
+	restore_soul_screen = 121
 };
 
 
@@ -81,7 +88,8 @@ inline std::vector<std::pair<std::string, ImageType>> Images{
 
 { "C:\\RavendawnBot\\enemy_find.png", ImageType::EnemyDetected }, { "C:\\RavendawnBot\\enemy_locked.png", ImageType::EnemyLocked },
 
-{ "C:\\RavendawnBot\\fishing_icon0.png", ImageType::fishiIcon },/*, { "C:\\RavendawnBot\\fishing_icon1.png", ImageType::fishiIcon },
+{ "C:\\RavendawnBot\\fishing_icon0.png", ImageType::fishiIcon },
+/*, { "C:\\RavendawnBot\\fishing_icon1.png", ImageType::fishiIcon },
 { "C:\\RavendawnBot\\fishing_icon2.png", ImageType::fishiIcon },*/
 { "C:\\RavendawnBot\\fishing_rood.png", ImageType::fishingRood }, { "C:\\RavendawnBot\\fishing_wait0.png", ImageType::fishingWait },
 { "C:\\RavendawnBot\\fishing_wait1.png", ImageType::fishingWait }, { "C:\\RavendawnBot\\fishing_wait2.png", ImageType::fishingWait },
@@ -94,7 +102,10 @@ inline std::vector<std::pair<std::string, ImageType>> Images{
 { "C:\\RavendawnBot\\inventory.png", ImageType::cleanSlotInv},
 
 { "C:\\RavendawnBot\\error_mining0.png", ImageType::error_mining}, { "C:\\RavendawnBot\\error_mining1.png", ImageType::error_mining},
-{ "C:\\RavendawnBot\\error_mining2.png", ImageType::error_mining}, { "C:\\RavendawnBot\\error_mining3.png", ImageType::error_mining}, 
+{ "C:\\RavendawnBot\\error_mining2.png", ImageType::error_mining}, { "C:\\RavendawnBot\\error_mining3.png", ImageType::error_mining},
+
+{ "C:\\RavendawnBot\\death_screen1.png", ImageType::death_screen}, { "C:\\RavendawnBot\\death_screen.png", ImageType::restore_soul_screen},
+
 
 };
 
@@ -116,7 +127,7 @@ namespace Recognition {
 	inline std::vector<cv::Point> bestWoodVec{};
 	inline cv::Point bestWood;
 	//Recognition Wood Farm
-	bool WoodFarm(HWND& hWnd, FindPos FindWoodPos, bool debug);
+	bool WoodFarm(HWND& hWnd, bool debug);
 	//bool WoodFarm(HWND& hWNd, POINT& pos, bool debug);
 
 }

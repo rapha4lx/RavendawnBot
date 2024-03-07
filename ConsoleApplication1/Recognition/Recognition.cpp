@@ -1258,7 +1258,7 @@ bool comparar_pontos_por_y(const cv::Point& ponto1, const cv::Point& ponto2) {
 	return ponto1.y < ponto2.y;
 }
 
-bool Recognition::WoodFarm(HWND& hWnd, FindPos FindWoodPos, bool debug) {
+bool Recognition::WoodFarm(HWND& hWnd, bool debug) {
 	RECT rect;
 	GetClientRect(hWnd, &rect);
 	int width = rect.right;
@@ -1424,23 +1424,6 @@ bool Recognition::WoodFarm(HWND& hWnd, FindPos FindWoodPos, bool debug) {
 						//cv::line(screenShot, center, cv::Point(center.x + pos.x, center.y + pos.y), cv::Scalar(255, 0, 0), 2);
 					}
 				}
-
-				switch (FindWoodPos)
-				{
-				case 0: {
-					//652 378
-					auto min = std::min_element(locations.begin(), locations.end(), comparar_pontos_por_y);
-					Recognition::bestWoodVec.push_back(*min);
-					break;
-				}
-				case 1: {
-					auto max = std::max_element(locations.begin(), locations.end(), comparar_pontos_por_y);
-					Recognition::bestWoodVec.push_back(*max);
-					break;
-				}
-				default:
-					break;
-				}
 			}
 		}
 		catch (const cv::Exception& e)
@@ -1478,33 +1461,7 @@ bool Recognition::WoodFarm(HWND& hWnd, FindPos FindWoodPos, bool debug) {
 		}
 	}
 
-	switch (FindWoodPos)
-	{
-	case 0: {
-		//652 378
-		if (bestWoodVec.size() > 0) {
-			auto min = std::min_element(bestWoodVec.begin(), bestWoodVec.end(), comparar_pontos_por_y);
-			Recognition::bestWood = *min;
-			Recognition::bestWoodVec.clear();
-			return true;
-		}
-
-		return false;
-		break;
-	}
-	case 1: {
-		if (bestWoodVec.size() > 0) {
-			auto max = std::max_element(bestWoodVec.begin(), bestWoodVec.end(), comparar_pontos_por_y);
-			Recognition::bestWood = *max;
-			Recognition::bestWoodVec.clear();
-			return true;
-		}
-		return false;
-		break;
-	}
-	default:
-		break;
-	}
+	
 	return false;
 }
 
