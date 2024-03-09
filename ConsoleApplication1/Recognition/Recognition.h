@@ -93,6 +93,7 @@ inline std::vector<std::pair<std::string, ImageType>> Images{
 { "C:\\RavendawnBot\\fishing_icon2.png", ImageType::fishiIcon },*/
 { "C:\\RavendawnBot\\fishing_rood.png", ImageType::fishingRood }, { "C:\\RavendawnBot\\fishing_wait0.png", ImageType::fishingWait },
 { "C:\\RavendawnBot\\fishing_wait1.png", ImageType::fishingWait }, { "C:\\RavendawnBot\\fishing_wait2.png", ImageType::fishingWait },
+{ "C:\\RavendawnBot\\fishing_wait3.png", ImageType::fishingWait },
 { "C:\\RavendawnBot\\error_fishing0.png", ImageType::error_fishing},
 
 { "C:\\RavendawnBot\\donthavefishi.png", ImageType::failSellText },
