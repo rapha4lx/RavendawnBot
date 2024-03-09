@@ -31,11 +31,11 @@
 #include <dwmapi.h>
 #include <tchar.h>
 
+#include "../Protection/antiDebug/antiDebug.h"
 
 
 
-
-LPCSTR Drawing::lpWindowName = "RadiationProject";
+LPCSTR Drawing::lpWindowName = "RadiationProject - RavendawnFull";
 ImVec2 Drawing::vWindowSize = { 350, 400 };
 ImGuiWindowFlags Drawing::WindowFlags = ImGuiWindowFlags_UnsavedDocument | ImGuiWindowFlags_NoResize;
 bool Drawing::bDraw = true;
@@ -70,13 +70,18 @@ void Drawing::Draw()
 		ImGui::SetNextWindowBgAlpha(1.0f);
 		ImGui::Begin(lpWindowName, &bDraw, WindowFlags);
 
+
+
 		//static char inputPID[6];
 		static char nick[30];
 		//ImGui::InputText("Set PID", inputPID, IM_ARRAYSIZE(inputPID));
+		ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.00f, 1.00f, 1.00f, 1.00f));
 		ImGui::InputText("Set Nick", nick, IM_ARRAYSIZE(nick));
+		ImGui::PopStyleColor();
 
 		if (ImGui::Button("Select")) {
 			if (nick[0] == NULL || nick[0] == '\0') {
+				ImGui::End();
 				return;
 			}
 
@@ -144,17 +149,26 @@ void Drawing::Draw()
 				GetWindowThreadProcessId(client.hWnd, &client.PID);
 				MoveWindow(client.hWnd, 0, 0, 0, 0, TRUE);
 			}
-			else
-			{
-				//MessageBox(0, "Janela nao foi encontrada", 0, 0);
-				exit(0);
-			}
 
 		}
 
 		ImGui::SameLine();
 
 		if (ImGui::Button("Open Game")) {
+			if (nick[0] == NULL || nick[0] == '\0') {
+				ImGui::End();
+				return;
+			}
+
+			Debug::processCount = -1;
+			std::string target_window_title = xorstr_("RadiationProject - RavendawnFull");
+			EnumWindows(Debug::EnumWindowsProc, reinterpret_cast<LPARAM>(&target_window_title[0]));
+
+			if (Debug::processCount > Debug::processCountLimit) {
+				ImGui::End();
+				return;
+			}
+
 			char* buffer{ nullptr };
 			size_t sz{ 0 };
 			if (_dupenv_s(&buffer, &sz, "USERPROFILE") == 0 && buffer != nullptr)
@@ -198,7 +212,7 @@ void Drawing::Draw()
 				break;
 			}
 
-			if (ImGui::Button("Edit")) {
+			if (ImGui::Button("Edit Skills")) {
 				client.bEditPerson = true;
 			}
 
@@ -211,10 +225,11 @@ void Drawing::Draw()
 
 				for (int i = 0; i < 12; i++) {
 					std::string skillNumber = "Skill " + std::to_string(i);
-
+					ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.00f, 1.00f, 1.00f, 1.00f));
 					ImGui::SliderFloat(skillNumber.c_str(), &client.charPerson.skills[i].cooldown, 0, 60, "%.1f");
 					ImGui::Checkbox((skillNumber + " Usable?").c_str(), &client.charPerson.skills[i].bUsable);
 					ImGui::Checkbox((skillNumber + " heal Skill?").c_str(), &client.charPerson.skills[i].healSkill);
+					ImGui::PopStyleColor();
 				}
 
 				if (ImGui::MenuItem("Save")) {
@@ -271,7 +286,10 @@ void Drawing::Draw()
 					ListarArquivos("C:\\RavendawnBot\\Farms\\Fishi", client, MapperType::Fishi);
 
 					if (ImGui::Button("Start AutoFishing")) {
-						client.bAutoFishing = true;
+						if (client.fishingWaipont.size())
+						{
+							client.bAutoFishing = true;
+						}
 					}
 
 					ImGui::EndPopup();
@@ -299,7 +317,10 @@ void Drawing::Draw()
 				if (ImGui::BeginPopup("Auto Farm Wood")) {
 					ListarArquivos("C:\\RavendawnBot\\Farms\\Wood", client, MapperType::Wood);
 					if (ImGui::Button("Start Farm Wood")) {
-						client.bWoodFarm = true;
+						if (client.woodWaipont.size())
+						{
+							client.bWoodFarm = true;
+						}
 					}
 					ImGui::EndPopup();
 				}
@@ -344,19 +365,40 @@ void Drawing::Draw()
 				}
 
 				if (client.bCavebotPopup) {
-					ImGui::OpenPopup("CaveBot");
+					ImGui::OpenPopup("CaveBotPopup");
 					client.bCavebotPopup = false;
 				}
 
-				if (ImGui::BeginPopup("CaveBot")) {
-					ListarArquivos("C:\\RavendawnBot\\Farms\\Cavebot", client, MapperType::caveWalk);
+				if (ImGui::BeginPopup("CaveBotPopup")) {
+					ListarArquivos("C:\\RavendawnBot\\Farms\\Cave", client, MapperType::caveWalk);
 					if (ImGui::Button("Start CaveBot")) {
-						client.bCaveBot = true;
+						if (client.cavebotWaipoint.size()) {
+							client.bCaveBot = true;
+						}
 					}
 					ImGui::EndPopup();
 				}
 			}
+			else
+			{
+				if (ImGui::Button("Stop Cave")) {
+					client.bCaveBot = false;
+					client.bCavebotPopup = false;
+				}
+			}
 
+			if (client.bNeedReturning) {
+				if (ImGui::Button("Stop return")) {
+					client.bNeedReturning = false;
+				}
+			}
+			else {
+				if (ImGui::Button("Force return")) {
+					client.CheckIfHasReturnFile();
+					client.returnIndex = 0;
+					client.bNeedReturning = true;
+				}
+			}
 			ImGui::Combo("MapperType", &mapperIndex, mapperTypeIndex, IM_ARRAYSIZE(mapperTypeIndex));
 
 			if (ImGui::Button("Clear")) {
@@ -369,10 +411,7 @@ void Drawing::Draw()
 			if (ImGui::Button("Add")) {
 				mapper.maxIndex++;
 				Waipoint map;
-				map.Pos = Vector3(
-					client.read<int>(client.BaseAddress + 0x27CCC1C),
-					client.read<int>(client.BaseAddress + 0x27CCC20),
-					client.read<int>(client.BaseAddress + 0x27CC498));
+				map.Pos = client.getPosition();
 
 				map.index = mapper.maxIndex;
 
@@ -404,6 +443,18 @@ void Drawing::Draw()
 				}
 				case 6: {
 					map.mapperType = MapperType::OreWalk;
+					break;
+				}
+				case 7: {
+					map.mapperType = MapperType::returning;
+					break;
+				}
+				case 8: {
+					map.mapperType = MapperType::returningEnd;
+					break;
+				}
+				case 9: {
+					map.mapperType = MapperType::caveWalk;
 					break;
 				}
 				default:
@@ -445,6 +496,10 @@ void Drawing::Draw()
 					case 2:
 					case 3: {
 						FarmTypeFile = "Fishi";
+						break;
+					}
+					case 4: {
+						FarmTypeFile = "NPC";
 						break;
 					}
 					case 5:
@@ -495,7 +550,12 @@ void Drawing::Draw()
 					}
 					break;
 				}
-
+				case 4: {
+					if (!(mapper_.mapperType == MapperType::npc)) {
+						continue;
+					}
+					break;
+				}
 				case 5:
 				case 6: {
 					if (!(mapper_.mapperType == MapperType::OreWalk || mapper_.mapperType == MapperType::Ore)) {
@@ -577,19 +637,8 @@ void Drawing::Draw()
 			break;
 		}
 
-		if (!client.returnIndex) {
-			if (ImGui::Button("Force return")) {
-				client.CheckIfHasReturnFile();
-				client.returnIndex = 0;
-				client.bNeedReturning = true;
-			}
-		}
-		else {
-			if (ImGui::Button("Stop return")) {
-				client.bNeedReturning = false;
-			}
-		}
 
+		//ImGui::Text("count : %d", Debug::processCount);
 
 		ImGui::End();
 	}
