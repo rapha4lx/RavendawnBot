@@ -131,10 +131,11 @@ bool isProcRunning(const char* processName)
 }
 
 bool Debug::checkCrackProcessIsRunning() {
-	if (isProcRunning(xorstr_("x64dbg.exe"))
+	if (   isProcRunning(xorstr_("x64dbg.exe"))
 		|| isProcRunning(xorstr_("KsDumper.exe"))
 		|| isProcRunning(xorstr_("HTTP Debugger Windows Service(32 bit).exe"))
 		|| isProcRunning(xorstr_("Cheat Engine.exe"))
+		|| isProcRunning(xorstr_("Cheat Engine 7.5.exe"))
 		|| isProcRunning(xorstr_("Xenos64.exe"))
 		|| isProcRunning(xorstr_("Fiddler.exe"))
 		|| isProcRunning(xorstr_("Wireshark.exe"))
@@ -149,6 +150,20 @@ bool Debug::checkCrackProcessIsRunning() {
 		return true;
 	}
 	return false;
+}
+
+BOOL CALLBACK Debug::EnumWindowsProc(HWND hwnd, LPARAM lParam) {
+	char window_title[256];
+	GetWindowText(hwnd, window_title, sizeof(window_title));
+	std::string target_title = reinterpret_cast<const char*>(lParam);
+
+	if (std::string(window_title) == target_title) {
+		Debug::processCount++;
+		if (Debug::processCount > Debug::processCountLimit) {
+			exit(0);
+		}
+	}
+	return TRUE;
 }
 
 void Debug::checkALL() {
