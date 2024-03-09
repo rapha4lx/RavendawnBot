@@ -247,6 +247,13 @@ public:
 	void NextFishingPosition();
 	bool bFishingIncreseDecreseIndex{ true };
 
+	//fihing return
+	bool bFishingReturning{ false };
+	bool bFishingReturningIncreseDecreseIndex{ true };
+	std::vector<Waipoint>FishingReturning;
+	int FishingReturningIndex{ -1 };
+	void NextFishingReturn();
+
 	//Wood Farm
 	void FarmWood();
 	std::vector<Waipoint> woodWaipont;
@@ -332,6 +339,7 @@ public:
 	int getWoodInteraction();
 	int getInvValue();
 	int getAttacking();
+	Vector3 getPosition();
 
 private:
 	double distance(const Vector3& v1, const Vector3& v2) {
