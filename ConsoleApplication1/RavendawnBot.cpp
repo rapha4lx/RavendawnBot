@@ -269,10 +269,13 @@ int wmain(
 
 	HANDLE tHread;
 	tHread = CreateThread(NULL, 0, t, NULL, 0, 0);
-	CloseHandle(tHread);
+	if (tHread) {
+		CloseHandle(tHread);
+	}
 
 	UI::Render();
 
+	
 
 	return 0;
 }
