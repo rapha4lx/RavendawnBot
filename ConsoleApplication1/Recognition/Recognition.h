@@ -1,5 +1,10 @@
 #pragma once
 
+
+
+
+#if defined (BOT)
+
 #include "../Client/Client.h"
 #include <opencv2/opencv.hpp>
 
@@ -37,13 +42,13 @@ enum ImageType {
 
 
 inline std::vector<std::pair<std::string, ImageType>> Images{
-{ "C:\\RavendawnBot\\axie_icon0.png", ImageType::axieIcon }, { "C:\\RavendawnBot\\axie_icon1.png", ImageType::axieIcon },
-{ "C:\\RavendawnBot\\axie_icon2.png", ImageType::axieIcon },
+{ xorstr_("C:\\RavendawnBot\\axie_icon0.png"), ImageType::axieIcon }, { xorstr_("C:\\RavendawnBot\\axie_icon1.png"), ImageType::axieIcon },
+{ xorstr_("C:\\RavendawnBot\\axie_icon2.png"), ImageType::axieIcon },
 
-{ "C:\\RavendawnBot\\axie_wait0.png", ImageType::axieWaiting }, { "C:\\RavendawnBot\\axie_wait2.png", ImageType::axieWaiting },
-{ "C:\\RavendawnBot\\axie_wait2.png", ImageType::axieWaiting },
+{ xorstr_("C:\\RavendawnBot\\axie_wait0.png"), ImageType::axieWaiting }, { xorstr_("C:\\RavendawnBot\\axie_wait2.png"), ImageType::axieWaiting },
+{ xorstr_("C:\\RavendawnBot\\axie_wait2.png"), ImageType::axieWaiting },
 
-{ "C:\\RavendawnBot\\green bar 0.png", ImageType::greenBar }, { "C:\\RavendawnBot\\green bar 1.png", ImageType::greenBar },
+{ xorstr_("C:\\RavendawnBot\\green bar 0.png"), ImageType::greenBar }, { xorstr_("C:\\RavendawnBot\\green bar 1.png"), ImageType::greenBar },
 
 //{ "C:\\RavendawnBot\\street.png", ImageType::street },
 //{ "C:\\RavendawnBot\\street2.png", ImageType::street }, { "C:\\RavendawnBot\\street3.png", ImageType::street },
@@ -81,31 +86,31 @@ inline std::vector<std::pair<std::string, ImageType>> Images{
 //{ "C:\\RavendawnBot\\ground44.png", ImageType::street }, { "C:\\RavendawnBot\\ground45.png", ImageType::street },
 //{ "C:\\RavendawnBot\\ground46.png", ImageType::street },
 
-{ "C:\\RavendawnBot\\interact0.png", ImageType::interaction }, { "C:\\RavendawnBot\\interact1.png", ImageType::interaction },
+{ xorstr_("C:\\RavendawnBot\\interact0.png"), ImageType::interaction }, { xorstr_("C:\\RavendawnBot\\interact1.png"), ImageType::interaction },
 
-{ "C:\\RavendawnBot\\coleting0.png", ImageType::ColectionIcon }, { "C:\\RavendawnBot\\coleting1.png", ImageType::ColectionIcon },
+{ xorstr_("C:\\RavendawnBot\\coleting0.png"), ImageType::ColectionIcon }, { xorstr_("C:\\RavendawnBot\\coleting1.png"), ImageType::ColectionIcon },
 
 
-{ "C:\\RavendawnBot\\enemy_find.png", ImageType::EnemyDetected }, { "C:\\RavendawnBot\\enemy_locked.png", ImageType::EnemyLocked },
+{ xorstr_("C:\\RavendawnBot\\enemy_find.png"), ImageType::EnemyDetected }, { xorstr_("C:\\RavendawnBot\\enemy_locked.png"), ImageType::EnemyLocked },
 
-{ "C:\\RavendawnBot\\fishing_icon0.png", ImageType::fishiIcon },
+{ xorstr_("C:\\RavendawnBot\\fishing_icon0.png"), ImageType::fishiIcon },
 /*, { "C:\\RavendawnBot\\fishing_icon1.png", ImageType::fishiIcon },
 { "C:\\RavendawnBot\\fishing_icon2.png", ImageType::fishiIcon },*/
-{ "C:\\RavendawnBot\\fishing_rood.png", ImageType::fishingRood }, { "C:\\RavendawnBot\\fishing_wait0.png", ImageType::fishingWait },
-{ "C:\\RavendawnBot\\fishing_wait1.png", ImageType::fishingWait }, { "C:\\RavendawnBot\\fishing_wait2.png", ImageType::fishingWait },
-{ "C:\\RavendawnBot\\fishing_wait3.png", ImageType::fishingWait },
-{ "C:\\RavendawnBot\\error_fishing0.png", ImageType::error_fishing},
+{ xorstr_("C:\\RavendawnBot\\fishing_rood.png"), ImageType::fishingRood }, { xorstr_("C:\\RavendawnBot\\fishing_wait0.png"), ImageType::fishingWait },
+{ xorstr_("C:\\RavendawnBot\\fishing_wait1.png"), ImageType::fishingWait }, {xorstr_("C:\\RavendawnBot\\fishing_wait2.png"), ImageType::fishingWait },
+{ xorstr_("C:\\RavendawnBot\\fishing_wait3.png"), ImageType::fishingWait },
+{ xorstr_("C:\\RavendawnBot\\error_fishing0.png"), ImageType::error_fishing},
 
-{ "C:\\RavendawnBot\\donthavefishi.png", ImageType::failSellText },
-{ "C:\\RavendawnBot\\sell_fish.png", ImageType::sellText },
-{ "C:\\RavendawnBot\\sell_button.png", ImageType::sellButton },
+{ xorstr_("C:\\RavendawnBot\\donthavefishi.png"), ImageType::failSellText },
+{ xorstr_("C:\\RavendawnBot\\sell_fish.png"), ImageType::sellText },
+{ xorstr_("C:\\RavendawnBot\\sell_button.png"), ImageType::sellButton },
 
-{ "C:\\RavendawnBot\\inventory.png", ImageType::cleanSlotInv},
+{ xorstr_("C:\\RavendawnBot\\inventory.png"), ImageType::cleanSlotInv},
 
-{ "C:\\RavendawnBot\\error_mining0.png", ImageType::error_mining}, { "C:\\RavendawnBot\\error_mining1.png", ImageType::error_mining},
-{ "C:\\RavendawnBot\\error_mining2.png", ImageType::error_mining}, { "C:\\RavendawnBot\\error_mining3.png", ImageType::error_mining},
+{ xorstr_("C:\\RavendawnBot\\error_mining0.png"), ImageType::error_mining}, { xorstr_("C:\\RavendawnBot\\error_mining1.png"), ImageType::error_mining},
+{ xorstr_("C:\\RavendawnBot\\error_mining2.png"), ImageType::error_mining}, { xorstr_("C:\\RavendawnBot\\error_mining3.png"), ImageType::error_mining},
 
-{ "C:\\RavendawnBot\\death_screen1.png", ImageType::death_screen}, { "C:\\RavendawnBot\\death_screen.png", ImageType::restore_soul_screen},
+{ xorstr_("C:\\RavendawnBot\\death_screen1.png"), ImageType::death_screen}, { xorstr_("C:\\RavendawnBot\\death_screen.png"), ImageType::restore_soul_screen},
 
 
 };
@@ -132,3 +137,6 @@ namespace Recognition {
 	//bool WoodFarm(HWND& hWNd, POINT& pos, bool debug);
 
 }
+
+
+#endif

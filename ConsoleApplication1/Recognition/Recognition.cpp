@@ -1,5 +1,6 @@
 #include <iostream>
 
+#if defined(BOT)
 #include "Recognition.h"
 
 #include <Windows.h>
@@ -1465,3 +1466,7 @@ bool Recognition::WoodFarm(HWND& hWnd, bool debug) {
 	return false;
 }
 
+
+
+
+#endif // defined(BOT)
