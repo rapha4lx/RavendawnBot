@@ -285,35 +285,6 @@ bool Connection::putAddressInJson(void* ADDRESS_OFFSETS, void* STRUCT_OFFSET) {
 
     Json::Value root = json_decode(fileText);
 
-    //std::stringstream stream;
-
-    //stream << xorstr_("0x") << std::hex << std::nouppercase << (ULONG64)(GetModuleHandle(NULL));
-    //std::string hexCode = stream.str();
-    //root[xorstr_("ADDRESS")] = hexCode;
-
-    //stream.clear();  // Limpar os flags de estado
-    //stream.str("");  // Limpar o conteúdo do stream
-
-    //stream << xorstr_("0x") << std::hex << std::nouppercase << (ULONG64)((ULONG64)ADDRESS_OFFSETS - (ULONG64)GetModuleHandle(NULL));
-    //hexCode = stream.str();
-    //root[xorstr_("CODE")] = hexCode;
-
-    //stream.clear();  // Limpar os flags de estado
-    //stream.str("");  // Limpar o conteúdo do stream
-
-    //stream << xorstr_("0x") << std::hex << std::nouppercase << (ULONG64)((ULONG64)STRUCT_OFFSET - (ULONG64)GetModuleHandle(NULL));
-    //hexCode = stream.str();
-    //root[xorstr_("STRUCT")] = hexCode;
-
-    //stream.clear();  // Limpar os flags de estado
-    //stream.str("");  // Limpar o conteúdo do stream
-
-#ifdef TESTE
-    stream << xorstr_("0x") << std::hex << (DWORD)(GetCurrentProcessId());
-    hexCode = stream.str();
-    root[xorstr_("PID")] = hexCode;
-#endif // TESTE
-
     strcpy_s( Connection::user, root[xorstr_("user")].asCString());
     strcpy_s( Connection::pass, root[xorstr_("pass")].asCString());
 
@@ -339,7 +310,15 @@ bool Connection::putAddressInJson(void* ADDRESS_OFFSETS, void* STRUCT_OFFSET) {
 
 
     Connection::loaderJson[xorstr_("application")] = xorstr_("Cheat");
+#if defined(BOT)
+#if defined(FULL)
     Connection::loaderJson[xorstr_("applicationName")] = xorstr_("RavendawnFull");
+#else
+    Connection::loaderJson[xorstr_("applicationName")] = xorstr_("RavendawnBot");
+#endif
+#elif defined(MULT)
+    Connection::loaderJson[xorstr_("applicationName")] = xorstr_("RavendawnMult");
+#endif
 
 #if defined ( DEBUG ) || defined ( TESTE ) || defined ( RELEASE_DEBUG )// DEBUG
     Connection::loaderJson[xorstr_("LoaderStatus")] = xorstr_("Debug");
