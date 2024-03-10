@@ -15,11 +15,13 @@
 
 #include <nlohmann/json.hpp>
 #include <fstream>
-#include <opencv2/opencv.hpp>
-#include <opencv2/dnn.hpp>
-#include <opencv2/imgcodecs.hpp>
-#include <opencv2/imgproc.hpp>
 
+#if defined(BOT)
+	#include <opencv2/opencv.hpp>
+	#include <opencv2/dnn.hpp>
+	#include <opencv2/imgcodecs.hpp>
+	#include <opencv2/imgproc.hpp>
+#endif
 #include <filesystem>
 #include <algorithm>
 
@@ -34,8 +36,15 @@
 #include "../Protection/antiDebug/antiDebug.h"
 
 
-
+#if defined(BOT)
+#if defined(FULL)
 LPCSTR Drawing::lpWindowName = "RadiationProject - RavendawnFull";
+#else
+LPCSTR Drawing::lpWindowName = "RadiationProject - RavendawnBot";
+#endif
+#elif defined(MULT)
+LPCSTR Drawing::lpWindowName = "RadiationProject - RavendawnMult";
+#endif
 ImVec2 Drawing::vWindowSize = { 350, 400 };
 ImGuiWindowFlags Drawing::WindowFlags = ImGuiWindowFlags_UnsavedDocument | ImGuiWindowFlags_NoResize;
 bool Drawing::bDraw = true;
@@ -50,6 +59,8 @@ bool Drawing::isActive()
 	return bDraw == true;
 }
 
+#if defined(BOT)
+
 void ListarArquivos(const std::string& pasta, Client& client, MapperType FarmType) {
 	for (const auto& entry : std::filesystem::directory_iterator(pasta)) {
 		if (std::filesystem::is_regular_file(entry)) {
@@ -62,6 +73,7 @@ void ListarArquivos(const std::string& pasta, Client& client, MapperType FarmTyp
 	}
 }
 
+#endif // DEBUG
 void Drawing::Draw()
 {
 	if (isActive())
@@ -72,87 +84,12 @@ void Drawing::Draw()
 
 
 
-		//static char inputPID[6];
+#if defined(MULT)
 		static char nick[30];
 		//ImGui::InputText("Set PID", inputPID, IM_ARRAYSIZE(inputPID));
 		ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.00f, 1.00f, 1.00f, 1.00f));
 		ImGui::InputText("Set Nick", nick, IM_ARRAYSIZE(nick));
 		ImGui::PopStyleColor();
-
-		if (ImGui::Button("Select")) {
-			if (nick[0] == NULL || nick[0] == '\0') {
-				ImGui::End();
-				return;
-			}
-
-			/*if (inputPID[0] == NULL || inputPID[0] == '\0') {
-				continue;
-			}*/
-
-			if (!std::filesystem::exists("C:\\RavendawnBot")) {
-				std::filesystem::create_directories("C:\\RavendawnBot");
-			}
-
-			if (!std::filesystem::exists("C:\\RavendawnBot\\accounts")) {
-				std::filesystem::create_directories("C:\\RavendawnBot\\accounts");
-			}
-
-
-			char* buffer{ nullptr };
-			size_t sz{ 0 };
-			if (_dupenv_s(&buffer, &sz, "USERPROFILE") == 0 && buffer != nullptr)
-			{
-
-			}
-
-			std::string sourceDir{ (std::string)(buffer)+"\\AppData\\Roaming\\Ravendawn\\ravendawn" };
-			if (!std::filesystem::exists("C:\\RavendawnBot\\accounts\\" + static_cast<std::string>(nick))) {
-				std::filesystem::create_directory("C:\\RavendawnBot\\accounts\\" + static_cast<std::string>(nick));
-				std::this_thread::sleep_for(std::chrono::milliseconds(8));
-				for (const auto& entry : std::filesystem::directory_iterator(sourceDir)) {
-					const auto& path = entry.path();
-					if (std::filesystem::is_regular_file(path)) {
-						if (path.filename().extension().string() == ".dll" || path.filename().extension().string() == ".exe") {
-							std::filesystem::copy_file(path, "C:\\RavendawnBot\\accounts\\" + static_cast<std::string>(nick) + "\\" + path.filename().string(), std::filesystem::copy_options::overwrite_existing);
-							std::cout << "Copied: " << path.filename() << std::endl;
-						}
-					}
-				}
-			}
-
-			std::string name = static_cast<std::string>(nick) + "\\" + nick + ".json";
-			std::ifstream file("C:\\RavendawnBot\\accounts\\" + name);
-			if (!file.is_open()) {
-				nlohmann::json json;
-				//json.push_back(client);
-
-				json = client;
-
-				std::ofstream ofile("C:\\RavendawnBot\\accounts\\" + name);
-				ofile << std::setw(4) << json << std::endl;
-				ofile.close();
-			}
-			else
-			{
-				nlohmann::json json;
-				file >> json;
-
-				client = json;
-			}
-
-			std::string processName{ "Ravendawn - " + static_cast<std::string>(nick) };
-
-			client.hWnd = FindWindowEx(0, 0, 0, processName.c_str());
-			if (client.hWnd) {
-				client.logged = true;
-				//client.open_handle();
-				GetWindowThreadProcessId(client.hWnd, &client.PID);
-				MoveWindow(client.hWnd, 0, 0, 0, 0, TRUE);
-			}
-
-		}
-
-		ImGui::SameLine();
 
 		if (ImGui::Button("Open Game")) {
 			if (nick[0] == NULL || nick[0] == '\0') {
@@ -160,14 +97,14 @@ void Drawing::Draw()
 				return;
 			}
 
-			Debug::processCount = -1;
+			/*Debug::processCount = -1;
 			std::string target_window_title = xorstr_("RadiationProject - RavendawnFull");
-			EnumWindows(Debug::EnumWindowsProc, reinterpret_cast<LPARAM>(&target_window_title[0]));
+			EnumWindows(Debug::EnumWindowsProc, reinterpret_cast<LPARAM>(&target_window_title[0]));*/
 
-			if (Debug::processCount > Debug::processCountLimit) {
+			/*if (Debug::processCount > Debug::processCountLimit) {
 				ImGui::End();
 				return;
-			}
+			}*/
 
 			char* buffer{ nullptr };
 			size_t sz{ 0 };
@@ -203,7 +140,152 @@ void Drawing::Draw()
 			}
 		}
 
+#elif defined(BOT)
+
+		static char nick[30];
+		if (!client.logged) {
+			//static char inputPID[6];
+			//ImGui::InputText("Set PID", inputPID, IM_ARRAYSIZE(inputPID));
+			ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.00f, 1.00f, 1.00f, 1.00f));
+			ImGui::InputText("Set Nick", nick, IM_ARRAYSIZE(nick));
+			ImGui::PopStyleColor();
+
+			if (ImGui::Button("Select")) {
+				if (nick[0] == NULL || nick[0] == '\0') {
+					ImGui::End();
+					return;
+				}
+
+				/*if (inputPID[0] == NULL || inputPID[0] == '\0') {
+					continue;
+				}*/
+
+				if (!std::filesystem::exists("C:\\RavendawnBot")) {
+					std::filesystem::create_directories("C:\\RavendawnBot");
+				}
+
+				if (!std::filesystem::exists("C:\\RavendawnBot\\accounts")) {
+					std::filesystem::create_directories("C:\\RavendawnBot\\accounts");
+				}
+
+
+				char* buffer{ nullptr };
+				size_t sz{ 0 };
+				if (_dupenv_s(&buffer, &sz, "USERPROFILE") == 0 && buffer != nullptr)
+				{
+
+				}
+
+				std::string sourceDir{ (std::string)(buffer)+"\\AppData\\Roaming\\Ravendawn\\ravendawn" };
+				if (!std::filesystem::exists("C:\\RavendawnBot\\accounts\\" + static_cast<std::string>(nick))) {
+					std::filesystem::create_directory("C:\\RavendawnBot\\accounts\\" + static_cast<std::string>(nick));
+					std::this_thread::sleep_for(std::chrono::milliseconds(8));
+					for (const auto& entry : std::filesystem::directory_iterator(sourceDir)) {
+						const auto& path = entry.path();
+						if (std::filesystem::is_regular_file(path)) {
+							if (path.filename().extension().string() == ".dll" || path.filename().extension().string() == ".exe") {
+								std::filesystem::copy_file(path, "C:\\RavendawnBot\\accounts\\" + static_cast<std::string>(nick) + "\\" + path.filename().string(), std::filesystem::copy_options::overwrite_existing);
+								std::cout << "Copied: " << path.filename() << std::endl;
+							}
+						}
+					}
+				}
+
+				std::string name = static_cast<std::string>(nick) + "\\" + nick + ".json";
+				std::ifstream file("C:\\RavendawnBot\\accounts\\" + name);
+				if (!file.is_open()) {
+					nlohmann::json json;
+					//json.push_back(client);
+
+					json = client;
+
+					std::ofstream ofile("C:\\RavendawnBot\\accounts\\" + name);
+					ofile << std::setw(4) << json << std::endl;
+					ofile.close();
+				}
+				else
+				{
+					nlohmann::json json;
+					file >> json;
+
+					client = json;
+				}
+
+				std::string processName{ "Ravendawn - " + static_cast<std::string>(nick) };
+
+				client.hWnd = FindWindowEx(0, 0, 0, processName.c_str());
+				if (client.hWnd) {
+					client.logged = true;
+					//client.open_handle();
+					GetWindowThreadProcessId(client.hWnd, &client.PID);
+					MoveWindow(client.hWnd, 0, 0, 0, 0, TRUE);
+				}
+
+			}
+
+			ImGui::SameLine();
+
+			if (ImGui::Button("Open Game")) {
+				if (nick[0] == NULL || nick[0] == '\0') {
+					ImGui::End();
+					return;
+				}
+
+				Debug::processCount = -1;
+				
+#if defined(BOT)
+#if defined(FULL)
+				std::string target_window_title = xorstr_("RadiationProject - RavendawnFull");
+#else
+				std::string target_window_title = xorstr_("RadiationProject - RavendawnBot");
+#endif
+#elif defined(MULT)
+				std::string target_window_title = xorstr_("RadiationProject - RavendawnMult");
+#endif
+				EnumWindows(Debug::EnumWindowsProc, reinterpret_cast<LPARAM>(&target_window_title[0]));
+
+				if (Debug::processCount > Debug::processCountLimit) {
+					ImGui::End();
+					return;
+				}
+
+				char* buffer{ nullptr };
+				size_t sz{ 0 };
+				if (_dupenv_s(&buffer, &sz, "USERPROFILE") == 0 && buffer != nullptr)
+				{
+
+				}
+
+				std::string sourceDir{ (std::string)(buffer)+"\\AppData\\Roaming\\Ravendawn\\ravendawn" };
+				if (!std::filesystem::exists("C:\\RavendawnBot\\accounts\\" + static_cast<std::string>(nick))) {
+					std::filesystem::create_directory("C:\\RavendawnBot\\accounts\\" + static_cast<std::string>(nick));
+					std::this_thread::sleep_for(std::chrono::milliseconds(8));
+					for (const auto& entry : std::filesystem::directory_iterator(sourceDir)) {
+						const auto& path = entry.path();
+						if (std::filesystem::is_regular_file(path)) {
+							if (path.filename().extension().string() == ".dll" || path.filename().extension().string() == ".exe") {
+								std::filesystem::copy_file(path, "C:\\RavendawnBot\\accounts\\" + static_cast<std::string>(nick) + "\\" + path.filename().string(), std::filesystem::copy_options::overwrite_existing);
+								std::cout << "Copied: " << path.filename() << std::endl;
+							}
+						}
+					}
+				}
+
+				std::string dir{ "C:\\RavendawnBot\\accounts\\" + static_cast<std::string>(nick) };
+
+				for (const auto& entry : std::filesystem::directory_iterator(dir)) {
+					const auto& path = entry.path();
+					if (std::filesystem::is_regular_file(path)) {
+						if (path.filename().extension().string() == ".exe") {
+							system(path.string().c_str());
+						}
+					}
+				}
+			}
+		}
+
 		for (; client.logged;) {
+			ImGui::Text(xorstr_("Account: %s"), nick);
 			if (!client.handle) {
 				break;
 			}
@@ -212,7 +294,7 @@ void Drawing::Draw()
 				break;
 			}
 
-			if (ImGui::Button("Edit Skills")) {
+			if (ImGui::Button(xorstr_("Edit Skills"))) {
 				client.bEditPerson = true;
 			}
 
@@ -221,7 +303,7 @@ void Drawing::Draw()
 				client.bEditPerson = false;
 			}
 
-			if (ImGui::BeginPopup("Edit Popup")) {
+			if (ImGui::BeginPopup(xorstr_("Edit Popup"))) {
 
 				for (int i = 0; i < 12; i++) {
 					std::string skillNumber = "Skill " + std::to_string(i);
@@ -232,7 +314,7 @@ void Drawing::Draw()
 					ImGui::PopStyleColor();
 				}
 
-				if (ImGui::MenuItem("Save")) {
+				if (ImGui::Button("Save")) {
 					std::ofstream json_account("C:\\RavendawnBot\\accounts\\"
 						+ static_cast<std::string>(nick) + "\\"
 						+ static_cast<std::string>(nick) + ".json");
@@ -262,16 +344,16 @@ void Drawing::Draw()
 			ImGui::Text("Health %lf", client.getHealth());
 #endif // (DEBUG)
 
-			if (ImGui::Checkbox("Auto Task", &client.bAutoTask)) {
+			if (ImGui::Checkbox(xorstr_("Auto Task"), &client.bAutoTask)) {
 				client.bAutoTask = true;
 			}
 
-			if (ImGui::Checkbox("Auto Attack", &client.bAutoAttack)) {
+			if (ImGui::Checkbox(xorstr_("Auto Attack"), &client.bAutoAttack)) {
 				client.bAutoAttack = true;
 			}
 
 			if (!client.bAutoFishing) {
-				if (ImGui::Button("Auto Fishing")) {
+				if (ImGui::Button(xorstr_("Auto Fishing"))) {
 					client.bAutoFishingPopup = true;
 				}
 
@@ -280,12 +362,12 @@ void Drawing::Draw()
 					client.bAutoFishingPopup = false;
 				}
 
-				if (ImGui::BeginPopup("AutoFishing Popup")) {
-					ImGui::Checkbox("Fishi Auto Move", &client.bFishingAutoMove);
+				if (ImGui::BeginPopup(xorstr_("AutoFishing Popup"))) {
+					ImGui::Checkbox(xorstr_("Fishi Auto Move"), &client.bFishingAutoMove);
 
-					ListarArquivos("C:\\RavendawnBot\\Farms\\Fishi", client, MapperType::Fishi);
+					ListarArquivos(xorstr_("C:\\RavendawnBot\\Farms\\Fishi"), client, MapperType::Fishi);
 
-					if (ImGui::Button("Start AutoFishing")) {
+					if (ImGui::Button(xorstr_("Start AutoFishing"))) {
 						if (client.fishingWaipont.size())
 						{
 							client.bAutoFishing = true;
@@ -297,7 +379,7 @@ void Drawing::Draw()
 			}
 			else
 			{
-				if (ImGui::Button("Stop AutoFishing")) {
+				if (ImGui::Button(xorstr_("Stop AutoFishing"))) {
 					client.bAutoFishing = false;
 					client.bFishingAutoMove = false;
 					client.bAutoFishingPopup = false;
@@ -305,18 +387,18 @@ void Drawing::Draw()
 			}
 
 			if (!client.bWoodFarm) {
-				if (ImGui::Button("Farm Wood")) {
+				if (ImGui::Button(xorstr_("Farm Wood"))) {
 					client.bAutoWoodFarmPopup = true;
 				}
 
 				if (client.bAutoWoodFarmPopup) {
-					ImGui::OpenPopup("Auto Farm Wood");
+					ImGui::OpenPopup(xorstr_("Auto Farm Wood"));
 					client.bAutoWoodFarmPopup = false;
 				}
 
-				if (ImGui::BeginPopup("Auto Farm Wood")) {
-					ListarArquivos("C:\\RavendawnBot\\Farms\\Wood", client, MapperType::Wood);
-					if (ImGui::Button("Start Farm Wood")) {
+				if (ImGui::BeginPopup(xorstr_("Auto Farm Wood"))) {
+					ListarArquivos(xorstr_("C:\\RavendawnBot\\Farms\\Wood"), client, MapperType::Wood);
+					if (ImGui::Button(xorstr_("Start Farm Wood"))) {
 						if (client.woodWaipont.size())
 						{
 							client.bWoodFarm = true;
@@ -327,25 +409,25 @@ void Drawing::Draw()
 			}
 			else
 			{
-				if (ImGui::Button("Stop Wood Farm")) {
+				if (ImGui::Button(xorstr_("Stop Wood Farm"))) {
 					client.bWoodFarm = false;
 					client.bAutoWoodFarmPopup = false;
 				}
 			}
 
 			if (!client.bOreFarm) {
-				if (ImGui::Button("Farm Ore")) {
+				if (ImGui::Button(xorstr_("Farm Ore"))) {
 					client.bAutoOreFarmPopup = true;
 				}
 
 				if (client.bAutoOreFarmPopup) {
-					ImGui::OpenPopup("Auto Farm Ore");
+					ImGui::OpenPopup(xorstr_("Auto Farm Ore"));
 					client.bAutoOreFarmPopup = false;
 				}
 
-				if (ImGui::BeginPopup("Auto Farm Ore")) {
-					ListarArquivos("C:\\RavendawnBot\\Farms\\Ore", client, MapperType::Ore);
-					if (ImGui::Button("Start Farm Ore")) {
+				if (ImGui::BeginPopup(xorstr_("Auto Farm Ore"))) {
+					ListarArquivos(xorstr_("C:\\RavendawnBot\\Farms\\Ore"), client, MapperType::Ore);
+					if (ImGui::Button(xorstr_("Start Farm Ore"))) {
 						client.bOreFarm = true;
 					}
 					ImGui::EndPopup();
@@ -353,25 +435,25 @@ void Drawing::Draw()
 			}
 			else
 			{
-				if (ImGui::Button("Stop Ore Farm")) {
+				if (ImGui::Button(xorstr_("Stop Ore Farm"))) {
 					client.bOreFarm = false;
 					client.bAutoOreFarmPopup = false;
 				}
 			}
 
 			if (!client.bCaveBot) {
-				if (ImGui::Button("CaveBot")) {
+				if (ImGui::Button(xorstr_("CaveBot"))) {
 					client.bCavebotPopup = true;
 				}
 
 				if (client.bCavebotPopup) {
-					ImGui::OpenPopup("CaveBotPopup");
+					ImGui::OpenPopup(xorstr_("CaveBotPopup"));
 					client.bCavebotPopup = false;
 				}
 
-				if (ImGui::BeginPopup("CaveBotPopup")) {
-					ListarArquivos("C:\\RavendawnBot\\Farms\\Cave", client, MapperType::caveWalk);
-					if (ImGui::Button("Start CaveBot")) {
+				if (ImGui::BeginPopup(xorstr_("CaveBotPopup"))) {
+					ListarArquivos(xorstr_("C:\\RavendawnBot\\Farms\\Cave"), client, MapperType::caveWalk);
+					if (ImGui::Button(xorstr_("Start CaveBot"))) {
 						if (client.cavebotWaipoint.size()) {
 							client.bCaveBot = true;
 						}
@@ -381,34 +463,35 @@ void Drawing::Draw()
 			}
 			else
 			{
-				if (ImGui::Button("Stop Cave")) {
+				if (ImGui::Button(xorstr_("Stop Cave"))) {
 					client.bCaveBot = false;
 					client.bCavebotPopup = false;
 				}
 			}
 
 			if (client.bNeedReturning) {
-				if (ImGui::Button("Stop return")) {
+				if (ImGui::Button(xorstr_("Stop return"))) {
 					client.bNeedReturning = false;
 				}
 			}
 			else {
-				if (ImGui::Button("Force return")) {
+				if (ImGui::Button(xorstr_("Force return"))) {
 					client.CheckIfHasReturnFile();
 					client.returnIndex = 0;
 					client.bNeedReturning = true;
 				}
 			}
-			ImGui::Combo("MapperType", &mapperIndex, mapperTypeIndex, IM_ARRAYSIZE(mapperTypeIndex));
 
-			if (ImGui::Button("Clear")) {
+			ImGui::Combo(xorstr_("MapperType"), &mapperIndex, mapperTypeIndex, IM_ARRAYSIZE(mapperTypeIndex));
+
+			if (ImGui::Button(xorstr_("Clear"))) {
 				mapper.waipoint.clear();
 				mapper.maxIndex = -1;
 			}
 
 			ImGui::SameLine();
 
-			if (ImGui::Button("Add")) {
+			if (ImGui::Button(xorstr_("Add"))) {
 				mapper.maxIndex++;
 				Waipoint map;
 				map.Pos = client.getPosition();
@@ -466,7 +549,7 @@ void Drawing::Draw()
 
 			ImGui::SameLine();
 
-			if (ImGui::Button("Save")) {
+			if (ImGui::Button(xorstr_("Save"))) {
 				client.bShowSavePopup = true;
 			}
 
@@ -475,14 +558,14 @@ void Drawing::Draw()
 				client.bShowSavePopup = false;
 			}
 
-			if (ImGui::BeginPopup("Save Popup")) {
+			if (ImGui::BeginPopup(xorstr_("Save Popup"))) {
 				static char	Filename[120];
 				static int FarmType{ 0 };
 
-				ImGui::InputText("File Name", Filename, IM_ARRAYSIZE(Filename));
-				ImGui::Combo("Farm Type", &FarmType, mapperTypeIndex, IM_ARRAYSIZE(mapperTypeIndex));
+				ImGui::InputText(xorstr_("File Name"), Filename, IM_ARRAYSIZE(Filename));
+				ImGui::Combo(xorstr_("Farm Type"), &FarmType, mapperTypeIndex, IM_ARRAYSIZE(mapperTypeIndex));
 
-				if (ImGui::Button("Save")) {
+				if (ImGui::Button(xorstr_("Save"))) {
 
 					std::string file{ Filename };
 					std::string FarmTypeFile{};
@@ -490,37 +573,37 @@ void Drawing::Draw()
 					{
 					case 0:
 					case 1: {
-						FarmTypeFile = "Wood";
+						FarmTypeFile = xorstr_("Wood");
 						break;
 					}
 					case 2:
 					case 3: {
-						FarmTypeFile = "Fishi";
+						FarmTypeFile = xorstr_("Fishi");
 						break;
 					}
 					case 4: {
-						FarmTypeFile = "NPC";
+						FarmTypeFile = xorstr_("NPC");
 						break;
 					}
 					case 5:
 					case 6: {
-						FarmTypeFile = "Ore";
+						FarmTypeFile = xorstr_("Ore");
 						break;
 					}
 					case 7:
 					case 8: {
-						FarmTypeFile = "Returning";
+						FarmTypeFile = xorstr_("Returning");
 						break;
 					}
 					case 9: {
-						FarmTypeFile = "Cave";
+						FarmTypeFile = xorstr_("Cave");
 						break;
 					}
 
 					default:
 						break;
 					}
-					std::ofstream json_account("C:\\RavendawnBot\\Farms\\" + FarmTypeFile + "\\" + file + ".json");
+					std::ofstream json_account(xorstr_("C:\\RavendawnBot\\Farms\\") + FarmTypeFile + xorstr_("\\") + file + xorstr_(".json"));
 
 					nlohmann::json json;
 					json = mapper.waipoint;
@@ -585,50 +668,50 @@ void Drawing::Draw()
 				switch (mapper_.mapperType)
 				{
 				case 0: {
-					typ = "Wood";
+					typ = xorstr_("Wood");
 					break;
 				}
 				case 1: {
-					typ = "WalkWood";
+					typ = xorstr_("WalkWood");
 					break;
 				}
 				case 2: {
-					typ = "Fishi";
+					typ = xorstr_("Fishi");
 					break;
 				}
 				case 3: {
-					typ = "WalkFishi";
+					typ = xorstr_("WalkFishi");
 					break;
 				}
 				case 4: {
-					typ = "npc";
+					typ = xorstr_("npc");
 					break;
 				}
 				case 5: {
-					typ = "ore";
+					typ = xorstr_("ore");
 					break;
 				}
 				case 6: {
-					typ = "OreWal";
+					typ = xorstr_("OreWal");
 					break;
 				}
 				case 7: {
-					typ = "returning";
+					typ = xorstr_("returning");
 					break;
 				}
 				case 8: {
-					typ = "returningEnd";
+					typ = xorstr_("returningEnd");
 					break;
 				}
 				case 9: {
-					typ = "CaveWalk";
+					typ = xorstr_("CaveWalk");
 					break;
 				}
 				default:
 					break;
 				}
 
-				ImGui::Text("MapperType: %s MapperXYZ: %d %d %d", typ.c_str(), mapper_.Pos.x, mapper_.Pos.y, mapper_.Pos.z);
+				ImGui::Text(xorstr_("MapperType: %s MapperXYZ: %d %d %d"), typ.c_str(), mapper_.Pos.x, mapper_.Pos.y, mapper_.Pos.z);
 				ImGui::SameLine();
 				//ImGui::Button("Edit");
 			}
@@ -637,8 +720,7 @@ void Drawing::Draw()
 			break;
 		}
 
-
-		//ImGui::Text("count : %d", Debug::processCount);
+#endif // #ifdef defined(BOT)
 
 		ImGui::End();
 	}
@@ -647,4 +729,4 @@ void Drawing::Draw()
 	if (GetAsyncKeyState(VK_INSERT) & 1)
 		bDraw = !bDraw;
 #endif
-	}
+}

@@ -127,9 +127,29 @@ LRESULT WINAPI UI::WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 void UI::Render()
 {
     ImGui_ImplWin32_EnableDpiAwareness();
+
+#if defined(BOT)
+#if defined(FULL)
     const WNDCLASSEX wc = { sizeof(WNDCLASSEX), CS_CLASSDC, WndProc, 0L, 0L, GetModuleHandle(nullptr), nullptr, nullptr, nullptr, nullptr, _T("RadiationProject - RavendawnFull"), nullptr };
+#else
+    const WNDCLASSEX wc = { sizeof(WNDCLASSEX), CS_CLASSDC, WndProc, 0L, 0L, GetModuleHandle(nullptr), nullptr, nullptr, nullptr, nullptr, _T("RadiationProject - RavendawnBot"), nullptr };
+#endif
+#elif defined(MULT)
+    const WNDCLASSEX wc = { sizeof(WNDCLASSEX), CS_CLASSDC, WndProc, 0L, 0L, GetModuleHandle(nullptr), nullptr, nullptr, nullptr, nullptr, _T("RadiationProject - RavendawnMult"), nullptr };
+#endif
+
     ::RegisterClassEx(&wc);
+
+#if defined(BOT)
+#if defined(FULL)
     const HWND hwnd = ::CreateWindow(wc.lpszClassName, _T("RadiationProject - RavendawnFull"), WS_OVERLAPPEDWINDOW, 100, 100, 50, 50, NULL, NULL, wc.hInstance, NULL);
+#else
+    const HWND hwnd = ::CreateWindow(wc.lpszClassName, _T("RadiationProject - RavendawnBot"), WS_OVERLAPPEDWINDOW, 100, 100, 50, 50, NULL, NULL, wc.hInstance, NULL);
+#endif
+#elif defined(MULT)
+    const HWND hwnd = ::CreateWindow(wc.lpszClassName, _T("RadiationProject - RavendawnMult"), WS_OVERLAPPEDWINDOW, 100, 100, 50, 50, NULL, NULL, wc.hInstance, NULL);
+#endif
+
 
     if (!CreateDeviceD3D(hwnd))
     {
@@ -177,19 +197,19 @@ void UI::Render()
     ImVec4* colors = style.Colors;
     float accent_colour[4] = { 232 / 255.f, 182 / 255.f, 0 / 255.f, 1.f };
 
-    colors[ImGuiCol_Text] = ImVec4(0.00f, 0.00f, 0.00f, 1.00f);
+    colors[ImGuiCol_Text] = ImVec4(1.00f, 1.00f, 1.00f, 1.00f);
     colors[ImGuiCol_TextDisabled] = ImVec4(ImColor(255, 255, 255, 179));
     colors[ImGuiCol_WindowBg] = ImVec4(37 / 255.f, 37 / 255.f, 37 / 255.f, 1.0f);
     colors[ImGuiCol_ChildBg] = ImVec4(252 / 255.f, 159 / 255.f, 3 / 255.f, 1.0f);
-    colors[ImGuiCol_PopupBg] = ImVec4(ImColor(28, 28, 28));
+    colors[ImGuiCol_PopupBg] = ImVec4(37 / 255.f, 37 / 255.f, 37 / 255.f, 1.0f);
     colors[ImGuiCol_Border] = ImVec4(ImColor(50, 50, 50));
     colors[ImGuiCol_BorderShadow] = ImVec4(0.00f, 0.00f, 0.00f, 0.00f);
     colors[ImGuiCol_FrameBg] = ImVec4(ImColor(28, 28, 28));
     colors[ImGuiCol_FrameBgHovered] = ImVec4(ImColor(23, 23, 23));
     colors[ImGuiCol_FrameBgActive] = ImVec4(ImColor(23, 23, 23));
-    colors[ImGuiCol_TitleBg] = ImVec4(0.04f, 0.04f, 0.04f, 1.00f);
-    colors[ImGuiCol_TitleBgActive] = ImVec4(0.16f, 0.29f, 0.48f, 1.00f);
-    colors[ImGuiCol_TitleBgCollapsed] = ImVec4(1.00f, 1.00f, 1.00f, 1.00f);
+    colors[ImGuiCol_TitleBg] = ImVec4(37 / 255.f, 37 / 255.f, 37 / 255.f, 1.0f);
+    colors[ImGuiCol_TitleBgActive] = ImVec4(37 / 255.f, 37 / 255.f, 37 / 255.f, 1.0f);
+    colors[ImGuiCol_TitleBgCollapsed] = ImVec4(37 / 255.f, 37 / 255.f, 37 / 255.f, 1.0f);
     colors[ImGuiCol_MenuBarBg] = ImVec4(0.14f, 0.14f, 0.14f, 1.00f);
     colors[ImGuiCol_ScrollbarBg] = ImVec4(0.02f, 0.02f, 0.02f, 0.00f);
     colors[ImGuiCol_ScrollbarGrab] = ImVec4(ImColor(20, 20, 20));
@@ -198,7 +218,7 @@ void UI::Render()
     colors[ImGuiCol_CheckMark] = ImVec4(accent_colour[0], accent_colour[1], accent_colour[2], accent_colour[3]);
     colors[ImGuiCol_SliderGrab] = ImVec4(accent_colour[0], accent_colour[1], accent_colour[2], 0.50f); //slider indication
     colors[ImGuiCol_SliderGrabActive] = ImVec4(accent_colour[0], accent_colour[1], accent_colour[2], 0.50f);//
-    colors[ImGuiCol_Button] = ImVec4(252 / 255.f, 215 / 255.f, 3 / 255.f, 1.0f);
+    colors[ImGuiCol_Button] = ImVec4(255 / 255.f, 196 / 255.f, 36 / 255.f, 1.0f);
     colors[ImGuiCol_ButtonHovered] = ImVec4(accent_colour[0], accent_colour[1], accent_colour[2], 0.70f);
     colors[ImGuiCol_ButtonActive] = ImVec4(accent_colour[0], accent_colour[1], accent_colour[2], 0.00f); //click button
     colors[ImGuiCol_Header] = ImVec4(accent_colour[0], accent_colour[1], accent_colour[2], accent_colour[3]);
@@ -254,8 +274,17 @@ void UI::Render()
 
     bool bDone = false;
 
-    /*std::string target_window_title = xorstr_("RadiationProject - RavendawnFull");
-    EnumWindows(Debug::EnumWindowsProc, reinterpret_cast<LPARAM>(&target_window_title[0]));*/
+#if defined(BOT)
+#if defined(FULL)
+    std::string target_window_title = xorstr_("RadiationProject - RavendawnFull");
+#else
+    std::string target_window_title = xorstr_("RadiationProject - RavendawnBot");
+#endif
+#elif defined(MULT)
+    std::string target_window_title = xorstr_("RadiationProject - RavendawnMult");
+#endif
+
+    EnumWindows(Debug::EnumWindowsProc, reinterpret_cast<LPARAM>(&target_window_title[0]));
 
     while (!bDone)
     {
