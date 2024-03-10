@@ -8,13 +8,11 @@
 #include <opencv2/opencv.hpp>
 #include <list>
 #include <cmath>
-
-
-//class Process {
-//public:
+#include "../Protection/xorstr.hpp"
 
 #pragma comment (lib, "ntdll.lib")
 
+#if defined(BOT)
 enum MapperType {
 	Wood = 0,
 	WalkWood = 1,
@@ -109,23 +107,23 @@ public:
 	// Operador de inserção para converter objeto da classe para JSON
 	friend void to_json(nlohmann::json& j, const Waipoint& waipoint) {
 		j = nlohmann::json{
-			{"PosX",  waipoint.Pos.x},
-			{"PosY",  waipoint.Pos.y},
-			{"PosZ",  waipoint.Pos.z},
-			{"MapperType",  waipoint.mapperType},
-			{"Index", waipoint.index}
+			{xorstr_("PosX"),  waipoint.Pos.x},
+			{xorstr_("PosY"),  waipoint.Pos.y},
+			{xorstr_("PosZ"),  waipoint.Pos.z},
+			{xorstr_("MapperType"),  waipoint.mapperType},
+			{xorstr_("Index"), waipoint.index}
 		};
 	}
 
 	// Operador de extração para converter JSON para objeto da classe
 	friend void from_json(const nlohmann::json& j, Waipoint& waipoint) {
-		j.at("PosX").get_to(waipoint.Pos.x);
-		j.at("PosY").get_to(waipoint.Pos.y);
-		j.at("PosZ").get_to(waipoint.Pos.z);
-		j.at("MapperType").get_to(waipoint.mapperType);
+		j.at(xorstr_("PosX")).get_to(waipoint.Pos.x);
+		j.at(xorstr_("PosY")).get_to(waipoint.Pos.y);
+		j.at(xorstr_("PosZ")).get_to(waipoint.Pos.z);
+		j.at(xorstr_("MapperType")).get_to(waipoint.mapperType);
 
-		if (j.contains("Index")) {
-			j.at("Index").get_to(waipoint.index);
+		if (j.contains(xorstr_("Index"))) {
+			j.at(xorstr_("Index")).get_to(waipoint.index);
 		}
 		else {
 			// Se o campo "Index" não estiver presente, define como 0
@@ -179,41 +177,34 @@ public:
 
 	// Operador de inserção para converter objeto da classe para JSON
 	friend void to_json(nlohmann::json& j, const Client& account) {
-		j = nlohmann::json{ {"Login", account.Login }, {"Pass", account.Pass},
-			{"Email" , account.Email}, {"Nick" , account.charPerson.Nick}, //CharPerson
-			{"skills" , nlohmann::json::array()}
+		j = nlohmann::json{ {xorstr_("Login"), account.Login }, {xorstr_("Pass"), account.Pass},
+			{xorstr_("Email") , account.Email}, {xorstr_("Nick") , account.charPerson.Nick}, //CharPerson
+			{xorstr_("skills") , nlohmann::json::array()}
 		};
 
 		for (int i = 0; i < 12; i++) {
-			j["skills"][i] = nlohmann::json{
-				{"cooldown", account.charPerson.skills[i].cooldown},
-				{"usable", account.charPerson.skills[i].bUsable},
-				{"healSkill", account.charPerson.skills[i].healSkill},
-				{"cooldownTime", account.charPerson.skills[i].cooldownTime.time_since_epoch().count()} // Converte para um tipo serializável
+			j[xorstr_("skills")][i] = nlohmann::json{
+				{xorstr_("cooldown"), account.charPerson.skills[i].cooldown},
+				{xorstr_("usable"), account.charPerson.skills[i].bUsable},
+				{xorstr_("healSkill"), account.charPerson.skills[i].healSkill}
+				//{"cooldownTime", account.charPerson.skills[i].cooldownTime.time_since_epoch().count()} // Converte para um tipo serializável
 			};
 		}
 	}
 
 	// Operador de extração para converter JSON para objeto da classe
 	friend void from_json(const nlohmann::json& j, Client& account) {
-		j.at("Login").get_to(account.Login);
-		j.at("Pass").get_to(account.Pass);
-		j.at("Email").get_to(account.Email);
-		j.at("Nick").get_to(account.charPerson.Nick);
+		j.at(xorstr_("Login")).get_to(account.Login);
+		j.at(xorstr_("Pass")).get_to(account.Pass);
+		j.at(xorstr_("Email")).get_to(account.Email);
+		j.at(xorstr_("Nick")).get_to(account.charPerson.Nick);
 		//j.at("CharPerson").at().get_to(account.charPerson);
-		if (j.contains("skills")) {
-			auto& skillsArray = j.at("skills");
+		if (j.contains(xorstr_("skills"))) {
+			auto& skillsArray = j.at(xorstr_("skills"));
 			for (int i = 0; i < 11 /*&& i < skillsArray.size()*/; ++i) {
-				skillsArray[i].at("cooldown").get_to(account.charPerson.skills[i].cooldown);
-				skillsArray[i].at("usable").get_to(account.charPerson.skills[i].bUsable);
-				skillsArray[i].at("healSkill").get_to(account.charPerson.skills[i].healSkill);
-				if (!skillsArray[i].contains("cooldownTime")) {
-					account.charPerson.skills[i].cooldownTime = std::chrono::steady_clock::now();
-				}
-				else
-				{
-					account.charPerson.skills[i].cooldownTime = std::chrono::steady_clock::time_point(std::chrono::steady_clock::duration(skillsArray[i].at("cooldownTime").get<int64_t>())); // Converte de volta para time_point
-				}
+				skillsArray[i].at(xorstr_("cooldown")).get_to(account.charPerson.skills[i].cooldown);
+				skillsArray[i].at(xorstr_("usable")).get_to(account.charPerson.skills[i].bUsable);
+				skillsArray[i].at(xorstr_("healSkill")).get_to(account.charPerson.skills[i].healSkill);
 			}
 		}
 	}
@@ -359,12 +350,13 @@ public:
 inline Client client;
 
 inline const char* mapperTypeIndex[]{
-	"Wood", "WalkWood",
-	"Fishi", "WalkFishi",
-	"npc", "Ore", "OreWalk",
-	"Returning", "returningEnd",
-	"CaveWalk"
+	xorstr_("Wood"), xorstr_("WalkWood"),
+	xorstr_("Fishi"), xorstr_("WalkFishi"),
+	xorstr_("npc"), xorstr_("Ore"), xorstr_("OreWalk"),
+	xorstr_("Returning"), xorstr_("returningEnd"),
+	xorstr_("CaveWalk")
 };
 inline int mapperIndex{ 0 };
 
 inline Mapper mapper;
+#endif 

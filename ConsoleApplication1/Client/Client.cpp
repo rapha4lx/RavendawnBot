@@ -4,6 +4,10 @@
 #include <psapi.h>
 
 #include <fstream>
+#include "../Protection/xorstr.hpp"
+
+
+#if defined(BOT)
 
 ULONG GetProcessBaseAddress(HANDLE& hProcess, HMODULE* phmod);
 
@@ -101,7 +105,7 @@ void Client::CheckIfHasReturnFile() {
 		this->returnWaipont.clear();
 	}
 
-	for (const auto& entry : std::filesystem::directory_iterator("C:\\RavendawnBot\\Farms\\Returning")) {
+	for (const auto& entry : std::filesystem::directory_iterator(xorstr_("C:\\RavendawnBot\\Farms\\Returning"))) {
 		if (std::filesystem::is_regular_file(entry)) {
 			std::string nomeArquivo = entry.path().stem().string();
 			if (this->lastMapper == nomeArquivo) {
@@ -404,7 +408,7 @@ void Client::AutoFishing() {
 	if (this->getInvValue() == 60) {
 		if (!this->bFishingReturning) {
 
-			for (const auto& entry : std::filesystem::directory_iterator("C:\\RavendawnBot\\Farms\\NPC")) {
+			for (const auto& entry : std::filesystem::directory_iterator(xorstr_("C:\\RavendawnBot\\Farms\\NPC"))) {
 				if (std::filesystem::is_regular_file(entry)) {
 					std::string nomeArquivo = entry.path().stem().string();
 					if (this->lastMapper == nomeArquivo) {
@@ -914,29 +918,29 @@ void Client::close_handle() noexcept {
 }
 
 void Client::LoadWaipointConfig(const std::string& FileName, MapperType FarmType) {
-	if (!std::filesystem::exists("C:\\RavendawnBot")) {
-		std::filesystem::create_directories("C:\\RavendawnBot");
+	if (!std::filesystem::exists(xorstr_("C:\\RavendawnBot"))) {
+		std::filesystem::create_directories(xorstr_("C:\\RavendawnBot"));
 		//here put a logic for downlaod recognitions files
 	}
 
-	if (!std::filesystem::exists("C:\\RavendawnBot\\accounts")) {
-		std::filesystem::create_directories("C:\\RavendawnBot\\accounts");
+	if (!std::filesystem::exists(xorstr_("C:\\RavendawnBot\\accounts"))) {
+		std::filesystem::create_directories(xorstr_("C:\\RavendawnBot\\accounts"));
 	}
 
-	if (!std::filesystem::exists("C:\\RavendawnBot\\Farms")) {
-		std::filesystem::create_directories("C:\\RavendawnBot\\Farms");
+	if (!std::filesystem::exists(xorstr_("C:\\RavendawnBot\\Farms"))) {
+		std::filesystem::create_directories(xorstr_("C:\\RavendawnBot\\Farms"));
 	}
 
-	if (!std::filesystem::exists("C:\\RavendawnBot\\Farms\\Fishi")) {
-		std::filesystem::create_directories("C:\\RavendawnBot\\Farms\\Fishi");
+	if (!std::filesystem::exists(xorstr_("C:\\RavendawnBot\\Farms\\Fishi"))) {
+		std::filesystem::create_directories(xorstr_("C:\\RavendawnBot\\Farms\\Fishi"));
 	}
 
-	if (!std::filesystem::exists("C:\\RavendawnBot\\Farms\\Wood")) {
-		std::filesystem::create_directories("C:\\RavendawnBot\\Farms\\Wood");
+	if (!std::filesystem::exists(xorstr_("C:\\RavendawnBot\\Farms\\Wood"))) {
+		std::filesystem::create_directories(xorstr_("C:\\RavendawnBot\\Farms\\Wood"));
 	}
 
-	if (!std::filesystem::exists("C:\\RavendawnBot\\Farms\\Cave")) {
-		std::filesystem::create_directories("C:\\RavendawnBot\\Farms\\Cave");
+	if (!std::filesystem::exists(xorstr_("C:\\RavendawnBot\\Farms\\Cave"))) {
+		std::filesystem::create_directories(xorstr_("C:\\RavendawnBot\\Farms\\Cave"));
 	}
 
 	std::string type;
@@ -944,26 +948,26 @@ void Client::LoadWaipointConfig(const std::string& FileName, MapperType FarmType
 	{
 	case 0:
 	case 1: {
-		type = "C:\\RavendawnBot\\Farms\\Wood\\" + FileName + ".json";
+		type = xorstr_("C:\\RavendawnBot\\Farms\\Wood\\") + FileName + xorstr_(".json");
 		break;
 	}
 	case 2:
 	case 3: {
-		type = "C:\\RavendawnBot\\Farms\\Fishi\\" + FileName + ".json";
+		type = xorstr_("C:\\RavendawnBot\\Farms\\Fishi\\") + FileName + xorstr_(".json");
 		break;
 	}
 	case 5:
 	case 6: {
-		type = "C:\\RavendawnBot\\Farms\\Ore\\" + FileName + ".json";
+		type = xorstr_("C:\\RavendawnBot\\Farms\\Ore\\") + FileName + xorstr_(".json");
 		break;
 	}
 	case 7:
 	case 8: {
-		type = "C:\\RavendawnBot\\Farms\\Returning\\" + FileName + ".json";
+		type = xorstr_("C:\\RavendawnBot\\Farms\\Returning\\") + FileName + xorstr_(".json");
 		break;
 	}
 	case 9: {
-		type = "C:\\RavendawnBot\\Farms\\Cave\\" + FileName + ".json";
+		type = xorstr_("C:\\RavendawnBot\\Farms\\Cave\\") + FileName + xorstr_(".json");
 		break;
 	}
 	default:
@@ -980,7 +984,7 @@ void Client::LoadWaipointConfig(const std::string& FileName, MapperType FarmType
 		file_json >> json;
 	}
 	catch (const std::exception& e) {
-		std::cerr << "Erro ao ler o arquivo JSON: " << e.what() << std::endl;
+		//std::cerr << "Erro ao ler o arquivo JSON: " << e.what() << std::endl;
 		return;
 	}
 	file_json.close();
@@ -1075,7 +1079,7 @@ void Client::LoadWaipointConfig(const std::string& FileName, MapperType FarmType
 
 void Client::findNearest(std::vector<Waipoint>& vectors, const Vector3& location, const MapperType mapperType) {
 	if (vectors.empty()) {
-		throw std::invalid_argument("List of vectors is empty.");
+		throw std::invalid_argument(xorstr_("List of vectors is empty."));
 	}
 
 	std::vector<Waipoint> filtred;
@@ -1185,29 +1189,29 @@ ULONG GetProcessBaseAddress(HANDLE& hProcess, HMODULE* phmod)
 #include <fstream>
 
 void Mapper::Load(const std::string& FileName, MapperType FarmType) {
-	if (!std::filesystem::exists("C:\\RavendawnBot")) {
-		std::filesystem::create_directories("C:\\RavendawnBot");
+	if (!std::filesystem::exists(xorstr_("C:\\RavendawnBot"))) {
+		std::filesystem::create_directories(xorstr_("C:\\RavendawnBot"));
 		//here put a logic for downlaod recognitions files
 	}
 
-	if (!std::filesystem::exists("C:\\RavendawnBot\\accounts")) {
-		std::filesystem::create_directories("C:\\RavendawnBot\\accounts");
+	if (!std::filesystem::exists(xorstr_("C:\\RavendawnBot\\accounts"))) {
+		std::filesystem::create_directories(xorstr_("C:\\RavendawnBot\\accounts"));
 	}
 
-	if (!std::filesystem::exists("C:\\RavendawnBot\\Farms")) {
-		std::filesystem::create_directories("C:\\RavendawnBot\\Farms");
+	if (!std::filesystem::exists(xorstr_("C:\\RavendawnBot\\Farms"))) {
+		std::filesystem::create_directories(xorstr_("C:\\RavendawnBot\\Farms"));
 	}
 
-	if (!std::filesystem::exists("C:\\RavendawnBot\\Farms\\Fishi")) {
-		std::filesystem::create_directories("C:\\RavendawnBot\\Farms\\Fishi");
+	if (!std::filesystem::exists(xorstr_("C:\\RavendawnBot\\Farms\\Fishi"))) {
+		std::filesystem::create_directories(xorstr_("C:\\RavendawnBot\\Farms\\Fishi"));
 	}
 
-	if (!std::filesystem::exists("C:\\RavendawnBot\\Farms\\Wood")) {
-		std::filesystem::create_directories("C:\\RavendawnBot\\Farms\\Wood");
+	if (!std::filesystem::exists(xorstr_("C:\\RavendawnBot\\Farms\\Wood"))) {
+		std::filesystem::create_directories(xorstr_("C:\\RavendawnBot\\Farms\\Wood"));
 	}
 
-	if (!std::filesystem::exists("C:\\RavendawnBot\\Farms\\Cave")) {
-		std::filesystem::create_directories("C:\\RavendawnBot\\Farms\\Cave");
+	if (!std::filesystem::exists(xorstr_("C:\\RavendawnBot\\Farms\\Cave"))) {
+		std::filesystem::create_directories(xorstr_("C:\\RavendawnBot\\Farms\\Cave"));
 	}
 
 	std::string type;
@@ -1216,26 +1220,26 @@ void Mapper::Load(const std::string& FileName, MapperType FarmType) {
 	{
 	case 0:
 	case 1: {
-		type = "Wood";
+		type = xorstr_("Wood");
 		break;
 	}
 	case 2:
 	case 3: {
-		type = "Fishi";
+		type = xorstr_("Fishi");
 		break;
 	}
 	case 5:
 	case 6: {
-		type = "Ore";
+		type = xorstr_("Ore");
 		break;
 	}
 	case 7:
 	case 8: {
-		type = "Returning";
+		type = xorstr_("Returning");
 		break;
 	}
 	case 9: {
-		type = "Cave";
+		type = xorstr_("Cave");
 		break;
 	}
 
@@ -1243,7 +1247,7 @@ void Mapper::Load(const std::string& FileName, MapperType FarmType) {
 		break;
 	}
 
-	std::ifstream file_json("C:\\RavendawnBot\\Farms\\" + type + "\\" + FileName + ".json");
+	std::ifstream file_json(xorstr_("C:\\RavendawnBot\\Farms\\") + type + xorstr_("\\") + FileName + xorstr_(".json"));
 	if (!file_json.is_open()) {
 		exit(0);
 	}
@@ -1253,7 +1257,7 @@ void Mapper::Load(const std::string& FileName, MapperType FarmType) {
 		file_json >> json;
 	}
 	catch (const std::exception& e) {
-		std::cerr << "Erro ao ler o arquivo JSON: " << e.what() << std::endl;
+		std::cerr << xorstr_("Erro ao ler o arquivo JSON: ") << e.what() << std::endl;
 		return;
 	}
 	file_json.close();
@@ -1292,7 +1296,7 @@ double Client::getMaxHealth() {
 }
 
 int Client::getWoodInteraction() {
-	return this->read<int>(this->read<ULONG_PTR>(this->BaseAddress + 0x0271A470) + 0xF80);
+	return this->read<int>(this->read<ULONG_PTR>(this->BaseAddress + 0x027CE7A0) + 0x6EC);
 }
 
 int Client::getInvValue() {
@@ -1311,3 +1315,7 @@ int Client::getAttacking() {
 Vector3 Client::getPosition() {
 	return Vector3(this->read<int>(this->LocalPlayer + 0x18), this->read<int>(this->LocalPlayer + 0x1C), this->read<int>(this->LocalPlayer + 0x20));
 }
+
+
+
+#endif
