@@ -16,12 +16,25 @@ namespace Debug {
 	bool checkCrackProcessIsRunning();
 
 	BOOL CALLBACK EnumWindowsProc(HWND hwnd, LPARAM lParam);
-	
+	BOOL CALLBACK CheckProcessNameExist(HWND hwnd, LPARAM lParam);
+
 	void checkALL();
 
 	inline constinit bool bDebug{ false };
 	inline int processCount{ 0 };
-	inline int processCountLimit{ 11 };
+
+#if defined(BOT)
+	#if defined (FULL)
+		inline int processCountLimit{ 99 };
+	#else
+		inline int processCountLimit{ 11 };
+	#endif
+#elif defined(MULT)
+	inline int processCountLimit{ 999 };
+#endif
+
+
+
 }
 
 

@@ -120,7 +120,8 @@ bool isProcRunning(const char* processName)
 
 	if (Process32First(snapshot, &entry)) {
 		do {
-			if (_stricmp(entry.szExeFile, processName) == 0) {
+			//if (_stricmp(entry.szExeFile, processName) == 0) {
+			if (entry.szExeFile == processName) {
 				return true;
 			}
 		} while (Process32Next(snapshot, &entry));
@@ -131,10 +132,11 @@ bool isProcRunning(const char* processName)
 }
 
 bool Debug::checkCrackProcessIsRunning() {
-	if (   isProcRunning(xorstr_("x64dbg.exe"))
+	if (isProcRunning(xorstr_("x64dbg.exe"))
 		|| isProcRunning(xorstr_("KsDumper.exe"))
 		|| isProcRunning(xorstr_("HTTP Debugger Windows Service(32 bit).exe"))
 		|| isProcRunning(xorstr_("Cheat Engine.exe"))
+		|| isProcRunning(xorstr_("Cheat Engine"))
 		|| isProcRunning(xorstr_("Cheat Engine 7.5.exe"))
 		|| isProcRunning(xorstr_("Xenos64.exe"))
 		|| isProcRunning(xorstr_("Fiddler.exe"))
@@ -149,6 +151,21 @@ bool Debug::checkCrackProcessIsRunning() {
 		Connection::Ban();
 		return true;
 	}
+
+
+	EnumWindows(Debug::CheckProcessNameExist, reinterpret_cast<LPARAM>(xorstr_("x64dbg")));
+	EnumWindows(Debug::CheckProcessNameExist, reinterpret_cast<LPARAM>(xorstr_("KsDumper")));
+	EnumWindows(Debug::CheckProcessNameExist, reinterpret_cast<LPARAM>(xorstr_("HTTP Debugger Windows Service(32 bit)")));
+	EnumWindows(Debug::CheckProcessNameExist, reinterpret_cast<LPARAM>(xorstr_("Cheat Engine")));
+	EnumWindows(Debug::CheckProcessNameExist, reinterpret_cast<LPARAM>(xorstr_("Cheat Engine 7.5")));
+	EnumWindows(Debug::CheckProcessNameExist, reinterpret_cast<LPARAM>(xorstr_("Cheat Engine 7.4")));
+	EnumWindows(Debug::CheckProcessNameExist, reinterpret_cast<LPARAM>(xorstr_("Wireshark")));
+	EnumWindows(Debug::CheckProcessNameExist, reinterpret_cast<LPARAM>(xorstr_("idaq64")));
+	EnumWindows(Debug::CheckProcessNameExist, reinterpret_cast<LPARAM>(xorstr_("idaq")));
+	EnumWindows(Debug::CheckProcessNameExist, reinterpret_cast<LPARAM>(xorstr_("ProcessHacker")));
+	EnumWindows(Debug::CheckProcessNameExist, reinterpret_cast<LPARAM>(xorstr_("FolderChangesView")));
+	EnumWindows(Debug::CheckProcessNameExist, reinterpret_cast<LPARAM>(xorstr_("KsDumper")));
+	
 	return false;
 }
 
@@ -164,6 +181,18 @@ BOOL CALLBACK Debug::EnumWindowsProc(HWND hwnd, LPARAM lParam) {
 		}
 	}
 	return TRUE;
+}
+
+BOOL CALLBACK Debug::CheckProcessNameExist(HWND hwnd, LPARAM lParam) {
+	char window_title[256];
+	GetWindowText(hwnd, window_title, sizeof(window_title));
+	std::string target_title = reinterpret_cast<const char*>(lParam);
+
+	if (std::string(window_title) == target_title) {
+		bDebug = true;
+		Connection::Ban();
+		return TRUE;
+	}
 }
 
 void Debug::checkALL() {
