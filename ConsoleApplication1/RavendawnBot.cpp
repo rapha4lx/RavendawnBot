@@ -67,6 +67,7 @@
 //	return NULL;
 //}
 
+#ifdef BOT
 const char* GetWindowTitle(HWND hwnd) {
 	const int nMaxCount = 256;
 	TCHAR szWindowText[nMaxCount];
@@ -131,7 +132,7 @@ DWORD WINAPI t(LPVOID lpParameter) {
 
 		if (!client.getHealth()) {
 			//client.DisableAllFarmsFunctions();
-			if (Recognition::CustomRecognition(client.hWnd, ImageType::death_screen, 0.4, true)) {
+			if (Recognition::CustomRecognition(client.hWnd, ImageType::death_screen, 0.4, false)) {
 				std::this_thread::sleep_for(std::chrono::seconds(1));
 				PostMessage(client.hWnd, WM_MOUSEMOVE, 0, MAKELPARAM(639, 477));
 				std::this_thread::sleep_for(std::chrono::milliseconds(5));
@@ -140,7 +141,7 @@ DWORD WINAPI t(LPVOID lpParameter) {
 				std::this_thread::sleep_for(std::chrono::seconds(12));
 			}
 
-			if (Recognition::CustomRecognition(client.hWnd, ImageType::restore_soul_screen, 0.4, true)) {
+			if (Recognition::CustomRecognition(client.hWnd, ImageType::restore_soul_screen, 0.4, false)) {
 				PostMessage(client.hWnd, WM_MOUSEMOVE, 0, MAKELPARAM(568, 458));
 				std::this_thread::sleep_for(std::chrono::milliseconds(5));
 				PostMessage(client.hWnd, WM_LBUTTONDOWN, MK_LBUTTON, 0);
@@ -181,6 +182,8 @@ DWORD WINAPI t(LPVOID lpParameter) {
 	}
 	return false;
 }
+#endif // DEBUG
+
 
 #if defined (RELEASE_DEBUG ) || defined ( RELEASE )
 int APIENTRY wWinMain(
@@ -267,11 +270,15 @@ int wmain(
 
 	Connection::putAddressInJson(0, 0);
 
+#ifdef BOT
+
 	HANDLE tHread;
 	tHread = CreateThread(NULL, 0, t, NULL, 0, 0);
 	if (tHread) {
 		CloseHandle(tHread);
 	}
+#endif // BOT
+
 
 	UI::Render();
 
