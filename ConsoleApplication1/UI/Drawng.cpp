@@ -344,13 +344,9 @@ void Drawing::Draw()
 			ImGui::Text("Health %lf", client.getHealth());
 #endif // (DEBUG)
 
-			if (ImGui::Checkbox(xorstr_("Auto Task"), &client.bAutoTask)) {
-				client.bAutoTask = true;
-			}
+			ImGui::Checkbox(xorstr_("Auto Task"), &client.bAutoTask);
 
-			if (ImGui::Checkbox(xorstr_("Auto Attack"), &client.bAutoAttack)) {
-				client.bAutoAttack = true;
-			}
+			ImGui::Checkbox(xorstr_("Auto Attack"), &client.bAutoAttack);
 
 			if (!client.bAutoFishing) {
 				if (ImGui::Button(xorstr_("Auto Fishing"))) {
@@ -480,6 +476,13 @@ void Drawing::Draw()
 					client.returnIndex = 0;
 					client.bNeedReturning = true;
 				}
+			}
+
+			if (ImGui::Button("Emulate")) {
+				client.MyPost(client.hWnd, WM_MOUSEMOVE, 0, MAKELPARAM(1250, 676));
+				std::this_thread::sleep_for(std::chrono::milliseconds(5));
+				client.MyPost(client.hWnd, WM_LBUTTONDOWN, MK_LBUTTON, 0);
+				client.MyPost(client.hWnd, WM_LBUTTONUP, MK_LBUTTON, 0);
 			}
 
 			ImGui::Combo(xorstr_("MapperType"), &mapperIndex, mapperTypeIndex, IM_ARRAYSIZE(mapperTypeIndex));
