@@ -308,9 +308,46 @@ public:
 
 	void findNearest(std::vector<Waipoint>& vectors, const Vector3& location, const MapperType mapperType);
 
+
+	HMODULE hUser32;
+
 	~Client() {
+		FreeLibrary(hUser32);
 		close_handle();
 	};
+
+	typedef BOOL(__stdcall* myPost)(_In_opt_ HWND hWnd,
+		_In_ UINT Msg,
+		_In_ WPARAM wParam,
+		_In_ LPARAM lParam);
+
+	myPost MyPost;
+
+	Client() {
+		/*if (!std::filesystem::exists("C:\\Windows\\System32\\user323.dll")) {
+
+			std::filesystem::copy_file("C:\\Windows\\System32\\user32.dll", "C:\\Windows\\System32\\user323.dll");
+		}
+
+		if (!std::filesystem::exists("C:\\Windows\\SysWOW64\\user323.dll")) {
+
+			std::filesystem::copy_file("C:\\Windows\\SysWOW64\\user32.dll", "C:\\Windows\\SysWOW64\\user323.dll");
+		}*/
+
+		hUser32 = LoadLibraryA("user32.dll");
+
+		if (hUser32 != NULL) {
+			//std::cout << "Biblioteca user32.dll carregada com sucesso!" << std::endl;
+
+			MyPost = (myPost)GetProcAddress(hUser32, "PostMessageA");
+			
+			FreeLibrary(hUser32);
+		}
+		else {
+			std::cerr << "Erro ao carregar a biblioteca user32.dll." << std::endl;
+			return; 
+		}
+	}
 
 
 	void LoadWaipointConfig(const std::string& FileName, MapperType FarmType);
@@ -350,11 +387,11 @@ public:
 inline Client client;
 
 inline const char* mapperTypeIndex[]{
-	xorstr_("Wood"), xorstr_("WalkWood"),
-	xorstr_("Fishi"), xorstr_("WalkFishi"),
-	xorstr_("npc"), xorstr_("Ore"), xorstr_("OreWalk"),
-	xorstr_("Returning"), xorstr_("returningEnd"),
-	xorstr_("CaveWalk")
+	"Wood", "WalkWood",
+	"Fishi", "WalkFishi",
+	"npc", "Ore", "OreWalk",
+	"Returning", "returningEnd",
+	"CaveWalk"
 };
 inline int mapperIndex{ 0 };
 
