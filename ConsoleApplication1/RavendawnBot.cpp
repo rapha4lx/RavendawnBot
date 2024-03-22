@@ -80,28 +80,28 @@ const char* GetWindowTitle(HWND hwnd) {
 	}
 }
 
-void SendText(HWND& hWnd, const std::string& text, bool bEnter)
-{
-	if (bEnter) {
-		PostMessage(hWnd, WM_KEYDOWN, VK_RETURN, MAKELPARAM(1, NULL));
-		PostMessage(hWnd, WM_KEYUP, VK_RETURN, MAKELPARAM(1, KF_UP)); //actually not necessary, just good practice
-		std::this_thread::sleep_for(std::chrono::milliseconds(10)); // Aguarda um curto per韔do antes de enviar o pr髕imo caractere
-	}
-
-	for (char c : text) {
-		SendMessage(hWnd, WM_CHAR, (int)c, 0);
-		std::this_thread::sleep_for(std::chrono::milliseconds(5)); // Aguarda um curto per韔do antes de enviar o pr髕imo caractere
-	}
-
-	if (bEnter) {
-		std::this_thread::sleep_for(std::chrono::milliseconds(30)); // Aguarda um curto per韔do antes de enviar o pr髕imo caractere
-
-		PostMessage(hWnd, WM_KEYDOWN, VK_RETURN, MAKELPARAM(1, NULL));
-		PostMessage(hWnd, WM_KEYUP, VK_RETURN, MAKELPARAM(1, KF_UP)); //actually not necessary, just good practice
-	}
-
-	std::this_thread::sleep_for(std::chrono::milliseconds(100)); // Aguarda um curto per韔do antes de enviar o pr髕imo caractere
-}
+//void SendText(HWND& hWnd, const std::string& text, bool bEnter)
+//{
+//	if (bEnter) {
+//		MyPost(hWnd, WM_KEYDOWN, VK_RETURN, MAKELPARAM(1, NULL));
+//		MyPost(hWnd, WM_KEYUP, VK_RETURN, MAKELPARAM(1, KF_UP)); //actually not necessary, just good practice
+//		std::this_thread::sleep_for(std::chrono::milliseconds(10)); // Aguarda um curto per韔do antes de enviar o pr髕imo caractere
+//	}
+//
+//	for (char c : text) {
+//		SendMessage(hWnd, WM_CHAR, (int)c, 0);
+//		std::this_thread::sleep_for(std::chrono::milliseconds(5)); // Aguarda um curto per韔do antes de enviar o pr髕imo caractere
+//	}
+//
+//	if (bEnter) {
+//		std::this_thread::sleep_for(std::chrono::milliseconds(30)); // Aguarda um curto per韔do antes de enviar o pr髕imo caractere
+//
+//		MyPost(hWnd, WM_KEYDOWN, VK_RETURN, MAKELPARAM(1, NULL));
+//		MyPost(hWnd, WM_KEYUP, VK_RETURN, MAKELPARAM(1, KF_UP)); //actually not necessary, just good practice
+//	}
+//
+//	std::this_thread::sleep_for(std::chrono::milliseconds(100)); // Aguarda um curto per韔do antes de enviar o pr髕imo caractere
+//}
 
 DWORD WINAPI t(LPVOID lpParameter) {
 	while (!guiWhile)
@@ -134,18 +134,18 @@ DWORD WINAPI t(LPVOID lpParameter) {
 			//client.DisableAllFarmsFunctions();
 			if (Recognition::CustomRecognition(client.hWnd, ImageType::death_screen, 0.4, false)) {
 				std::this_thread::sleep_for(std::chrono::seconds(1));
-				PostMessage(client.hWnd, WM_MOUSEMOVE, 0, MAKELPARAM(639, 477));
+				client.MyPost(client.hWnd, WM_MOUSEMOVE, 0, MAKELPARAM(639, 477));
 				std::this_thread::sleep_for(std::chrono::milliseconds(5));
-				PostMessage(client.hWnd, WM_LBUTTONDOWN, MK_LBUTTON, 0);
-				PostMessage(client.hWnd, WM_LBUTTONUP, MK_LBUTTON, 0);
+				client.MyPost(client.hWnd, WM_LBUTTONDOWN, MK_LBUTTON, 0);
+				client.MyPost(client.hWnd, WM_LBUTTONUP, MK_LBUTTON, 0);
 				std::this_thread::sleep_for(std::chrono::seconds(12));
 			}
 
 			if (Recognition::CustomRecognition(client.hWnd, ImageType::restore_soul_screen, 0.4, false)) {
-				PostMessage(client.hWnd, WM_MOUSEMOVE, 0, MAKELPARAM(568, 458));
+				client.MyPost(client.hWnd, WM_MOUSEMOVE, 0, MAKELPARAM(568, 458));
 				std::this_thread::sleep_for(std::chrono::milliseconds(5));
-				PostMessage(client.hWnd, WM_LBUTTONDOWN, MK_LBUTTON, 0);
-				PostMessage(client.hWnd, WM_LBUTTONUP, MK_LBUTTON, 0);
+				client.MyPost(client.hWnd, WM_LBUTTONDOWN, MK_LBUTTON, 0);
+				client.MyPost(client.hWnd, WM_LBUTTONUP, MK_LBUTTON, 0);
 			}
 
 			client.CheckIfHasReturnFile();
@@ -177,6 +177,12 @@ DWORD WINAPI t(LPVOID lpParameter) {
 		if (client.bCaveBot)
 		{
 			client.CaveFarm();
+			continue;
+		}
+
+		if (client.bAutoTask)
+		{
+			client.AutoTask();
 			continue;
 		}
 	}
