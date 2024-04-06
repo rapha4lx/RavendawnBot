@@ -133,7 +133,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LibraryPath>C:\Program Files (x86)\Microsoft DirectX SDK (June 2010)\Lib\x64;$(LibraryPath)</LibraryPath>
-    <TargetName>RavendawnFull</TargetName>
+    <TargetName>RavendawnFullNoVMP</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release_Bot|x64'">
     <LibraryPath>C:\Program Files (x86)\Microsoft DirectX SDK (June 2010)\Lib\x64;$(LibraryPath)</LibraryPath>
@@ -214,7 +214,8 @@
     </ClCompile>
     <Link>
       <AdditionalDependencies>$(DXSDK_DIR)Lib\x64\d3d11.lib;$(SolutionDir)\ConsoleApplication1\Imports\opencv2\lib\opencv_world490d.lib;version.lib;$(SolutionDir)ConsoleApplication1\Imports\curl\x64 release\lib\libcurl_a.lib;$(CoreLibraryDependencies);%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(SolutionDir)ConsoleApplication1\Imports\opencv2\build\lib</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>
+      </AdditionalLibraryDirectories>
       <SubSystem>Console</SubSystem>
       <UACExecutionLevel>RequireAdministrator</UACExecutionLevel>
     </Link>
@@ -229,6 +230,7 @@
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>$(DXSDK_DIR)Include;$(SolutionDir)ConsoleApplication1\Imports;$(SolutionDir)ConsoleApplication1\Imports\curl\x64 release\include;$(SolutionDir)ConsoleApplication1\Imports\json\json</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>

@@ -6,15 +6,12 @@
 #include <thread>
 
 #include <TlHelp32.h>
-#include <d3d9.h>
+//#include <d3d9.h>
 #include <d3d11.h>
 
 #include <nlohmann/json.hpp>
 #include <fstream>
 #include <opencv2/opencv.hpp>
-#include <opencv2/dnn.hpp>
-#include <opencv2/imgcodecs.hpp>
-#include <opencv2/imgproc.hpp>
 
 #include <filesystem>
 #include <algorithm>
@@ -185,6 +182,8 @@ DWORD WINAPI t(LPVOID lpParameter) {
 			client.AutoTask();
 			continue;
 		}
+
+
 	}
 	return false;
 }
