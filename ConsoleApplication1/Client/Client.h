@@ -23,7 +23,8 @@ enum MapperType {
 	OreWalk = 6,
 	returning = 7,
 	returningEnd = 8,
-	caveWalk = 9
+	caveWalk = 9,
+	mission = 10
 };
 
 struct Vector3 {
@@ -286,6 +287,15 @@ public:
 	std::chrono::steady_clock::time_point lastCaveFarm;
 	void NextCavePosition();
 
+	//auto mission
+	void Mission();
+	bool bMission{ false };
+	bool bMissionIncreseDecreseIndex{ true };
+	std::vector<Waipoint> missionWaipoint;
+	int missionIndex{ -1 };
+	std::chrono::steady_clock::time_point lastMission;
+	void NextMission();
+
 
 	void DisableAllFarmsFunctions();
 
@@ -391,7 +401,7 @@ inline const char* mapperTypeIndex[]{
 	"Fishi", "WalkFishi",
 	"npc", "Ore", "OreWalk",
 	"Returning", "returningEnd",
-	"CaveWalk"
+	"CaveWalk", "mission"
 };
 inline int mapperIndex{ 0 };
 

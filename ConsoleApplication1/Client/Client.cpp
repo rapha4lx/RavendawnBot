@@ -22,116 +22,92 @@ inline bool d;
 
 
 void Client::move(int x, int y, int z) {
-	if (x > 0 && y > 0) {//diagonal direita para baixo
-		MyPost(this->hWnd, WM_KEYDOWN, 0x44, 0);//D
-std::this_thread::sleep_for(std::chrono::milliseconds(120));
-		MyPost(this->hWnd, WM_KEYDOWN, 0x53, 0);//S
-std::this_thread::sleep_for(std::chrono::milliseconds(120));
-		MyPost(this->hWnd, WM_KEYUP, 0x44, 0);
-		MyPost(this->hWnd, WM_KEYUP, 0x53, 0);
-		return;
-	}
-	else if (x < 0 && y < 0) {//diagonal esqueda para cima
-		MyPost(this->hWnd, WM_KEYDOWN, 0x41, 0);//A
-std::this_thread::sleep_for(std::chrono::milliseconds(120));
-		MyPost(this->hWnd, WM_KEYDOWN, 0x57, 0);//W
-std::this_thread::sleep_for(std::chrono::milliseconds(120));
-		MyPost(this->hWnd, WM_KEYUP, 0x41, 0);
-		MyPost(this->hWnd, WM_KEYUP, 0x57, 0);
-		return;
-	}
-	else if (x < 0 && y > 0) { //diagonal esqueda para baixo
-		MyPost(this->hWnd, WM_KEYDOWN, 0x41, 0);//A
-std::this_thread::sleep_for(std::chrono::milliseconds(120));
-		MyPost(this->hWnd, WM_KEYDOWN, 0x53, 0);//S
-std::this_thread::sleep_for(std::chrono::milliseconds(120));
-		MyPost(this->hWnd, WM_KEYUP, 0x41, 0);
-		MyPost(this->hWnd, WM_KEYUP, 0x53, 0);
-		return;
-	}
-	else if (x > 0 && y < 0) { //diagonal direita para cima
-		MyPost(this->hWnd, WM_KEYDOWN, 0x44, 0);//D
-std::this_thread::sleep_for(std::chrono::milliseconds(120));
-		MyPost(this->hWnd, WM_KEYDOWN, 0x57, 0);//W
-std::this_thread::sleep_for(std::chrono::milliseconds(120));
-		MyPost(this->hWnd, WM_KEYUP, 0x44, 0);
-		MyPost(this->hWnd, WM_KEYUP, 0x57, 0);
-		return;
-	}
-	else if (x > 0) {
-		MyPost(this->hWnd, WM_KEYDOWN, 0x44, 0);//D
-std::this_thread::sleep_for(std::chrono::milliseconds(120));
-		MyPost(this->hWnd, WM_KEYUP, 0x44, 0);
-		return;
-	}
-	else if (x < 0) {
-		MyPost(this->hWnd, WM_KEYDOWN, 0x41, 0);//A
-std::this_thread::sleep_for(std::chrono::milliseconds(120));
-		MyPost(this->hWnd, WM_KEYUP, 0x41, 0);
-		return;
-	}
-	else if (y > 0) {
-		MyPost(this->hWnd, WM_KEYDOWN, 0x53, 0);//S
-std::this_thread::sleep_for(std::chrono::milliseconds(120));
-		MyPost(this->hWnd, WM_KEYUP, 0x53, 0);
-		return;
-	}
-	else if (y < 0) {
-		MyPost(this->hWnd, WM_KEYDOWN, 0x57, 0);//D
-std::this_thread::sleep_for(std::chrono::milliseconds(120));
-		MyPost(this->hWnd, WM_KEYUP, 0x57, 0);
-		return;
-	}
-
-	//if (x != 0) {
-	//	if (x > 0) {
-	//		if (a) {
-	//			MyPost(this->hWnd, WM_KEYUP, 0x41, 0);//a
-	//			std::this_thread::sleep_for(std::chrono::milliseconds(930));
-	//			a = false;
-	//		}
-	//		MyPost(this->hWnd, WM_KEYDOWN, 0x44, 0);//d
-	//		std::this_thread::sleep_for(std::chrono::milliseconds(930));
-	//		d = true;
-	//		//return;
+	//	if (x > 0 && y > 0) {//diagonal direita para baixo
+	//		MyPost(this->hWnd, WM_KEYDOWN, 0x44, 0);//D
+	//std::this_thread::sleep_for(std::chrono::milliseconds(120));
+	//		MyPost(this->hWnd, WM_KEYDOWN, 0x53, 0);//S
+	//std::this_thread::sleep_for(std::chrono::milliseconds(120));
+	//		MyPost(this->hWnd, WM_KEYUP, 0x44, 0);
+	//		MyPost(this->hWnd, WM_KEYUP, 0x53, 0);
+	//		return;
+	//	}
+	//	else if (x < 0 && y < 0) {//diagonal esqueda para cima
+	//		MyPost(this->hWnd, WM_KEYDOWN, 0x41, 0);//A
+	//std::this_thread::sleep_for(std::chrono::milliseconds(120));
+	//		MyPost(this->hWnd, WM_KEYDOWN, 0x57, 0);//W
+	//std::this_thread::sleep_for(std::chrono::milliseconds(120));
+	//		MyPost(this->hWnd, WM_KEYUP, 0x41, 0);
+	//		MyPost(this->hWnd, WM_KEYUP, 0x57, 0);
+	//		return;
+	//	}
+	//	else if (x < 0 && y > 0) { //diagonal esqueda para baixo
+	//		MyPost(this->hWnd, WM_KEYDOWN, 0x41, 0);//A
+	//std::this_thread::sleep_for(std::chrono::milliseconds(120));
+	//		MyPost(this->hWnd, WM_KEYDOWN, 0x53, 0);//S
+	//std::this_thread::sleep_for(std::chrono::milliseconds(120));
+	//		MyPost(this->hWnd, WM_KEYUP, 0x41, 0);
+	//		MyPost(this->hWnd, WM_KEYUP, 0x53, 0);
+	//		return;
+	//	}
+	//	else if (x > 0 && y < 0) { //diagonal direita para cima
+	//		MyPost(this->hWnd, WM_KEYDOWN, 0x44, 0);//D
+	//std::this_thread::sleep_for(std::chrono::milliseconds(120));
+	//		MyPost(this->hWnd, WM_KEYDOWN, 0x57, 0);//W
+	//std::this_thread::sleep_for(std::chrono::milliseconds(120));
+	//		MyPost(this->hWnd, WM_KEYUP, 0x44, 0);
+	//		MyPost(this->hWnd, WM_KEYUP, 0x57, 0);
+	//		return;
+	//	}
+	//	else if (x > 0) {
+	//		MyPost(this->hWnd, WM_KEYDOWN, 0x44, 0);//D
+	//std::this_thread::sleep_for(std::chrono::milliseconds(120));
+	//		MyPost(this->hWnd, WM_KEYUP, 0x44, 0);
+	//		return;
 	//	}
 	//	else if (x < 0) {
-	//		if (d) {
-	//			MyPost(this->hWnd, WM_KEYUP, 0x44, 0);//d
-	//			std::this_thread::sleep_for(std::chrono::milliseconds(930));
-	//			d = false;
-	//		}
-	//		MyPost(this->hWnd, WM_KEYDOWN, 0x41, 0); //a
-	//		std::this_thread::sleep_for(std::chrono::milliseconds(930));
-	//		a = true;
-	//		//return;
-	//		//std::this_thread::sleep_for(std::chrono::milliseconds(10));
+	//		MyPost(this->hWnd, WM_KEYDOWN, 0x41, 0);//A
+	//std::this_thread::sleep_for(std::chrono::milliseconds(120));
+	//		MyPost(this->hWnd, WM_KEYUP, 0x41, 0);
+	//		return;
 	//	}
-	//}
-
-	//if (y != 0) {
-	//	if (y > 0) {
-	//		if (s) {
-	//			MyPost(this->hWnd, WM_KEYUP, 0x57, 0);//s
-	//			s = false;
-	//		}
-	//		
-	//		MyPost(this->hWnd, WM_KEYDOWN, 0x53, 0);//w
-	//		w = true;
-	//		//return;
-	//		//std::this_thread::sleep_for(std::chrono::milliseconds(10));
+	//	else if (y > 0) {
+	//		MyPost(this->hWnd, WM_KEYDOWN, 0x53, 0);//S
+	//std::this_thread::sleep_for(std::chrono::milliseconds(120));
+	//		MyPost(this->hWnd, WM_KEYUP, 0x53, 0);
+	//		return;
 	//	}
 	//	else if (y < 0) {
-	//		if (w) {
-	//			MyPost(this->hWnd, WM_KEYUP, 0x53, 0);//w
-	//			w = false;
-	//		}
-	//		MyPost(this->hWnd, WM_KEYDOWN, 0x57, 0);//s
-	//		s = true;
-	//		//return;
-	//		//std::this_thread::sleep_for(std::chrono::milliseconds(10));
+	//		MyPost(this->hWnd, WM_KEYDOWN, 0x57, 0);//D
+	//std::this_thread::sleep_for(std::chrono::milliseconds(120));
+	//		MyPost(this->hWnd, WM_KEYUP, 0x57, 0);
+	//		return;
 	//	}
-	//}
+
+	if (x > 0)
+	{
+		MyPost(this->hWnd, WM_KEYDOWN, 0x44, 0);
+		std::this_thread::sleep_for(std::chrono::milliseconds(120));
+		MyPost(this->hWnd, WM_KEYUP, 0x44, 0);
+	}
+	else if (x < 0)
+	{
+		MyPost(this->hWnd, WM_KEYDOWN, 0x41, 0);
+		std::this_thread::sleep_for(std::chrono::milliseconds(120));
+		MyPost(this->hWnd, WM_KEYUP, 0x41, 0);
+	}
+
+	if (y > 0)
+	{
+		MyPost(this->hWnd, WM_KEYDOWN, 0x57, 0);
+		std::this_thread::sleep_for(std::chrono::milliseconds(120));
+		MyPost(this->hWnd, WM_KEYUP, 0x57, 0);
+	}
+	else if (y < 0)
+	{
+		MyPost(this->hWnd, WM_KEYDOWN, 0x53, 0);
+		std::this_thread::sleep_for(std::chrono::milliseconds(120));
+		MyPost(this->hWnd, WM_KEYUP, 0x53, 0);
+	}
 }
 
 void Client::CheckIfHasReturnFile() {
@@ -255,6 +231,7 @@ void Client::DisableAllFarmsFunctions() {
 	this->bWoodFarm = false;
 	this->bAutoAttack = false;
 	this->bOreFarm = false;
+	this->bMission = false;
 }
 //140 213
 //148 230
@@ -930,6 +907,54 @@ void Client::CaveFarm() {
 	}
 }
 
+void Client::Mission() {
+	if (this->getHealth() < this->getMaxHealth()) {
+		if (Recognition::CustomRecognition(this->hWnd, 100, 205, 59, 36, ImageType::EnemyLocked, 0.55)) {
+			this->AutoAttack(false);
+			return;
+		}
+		else
+		{
+			if (Recognition::CustomRecognition(this->hWnd, 100, 205, 59, 36, ImageType::EnemyDetected, 0.5)) {
+				MyPost(this->hWnd, WM_KEYDOWN, VK_TAB, 0);
+				std::this_thread::sleep_for(std::chrono::milliseconds(1));
+				MyPost(this->hWnd, WM_KEYUP, VK_TAB, 0);
+			}
+		}
+		this->AutoAttack(true);
+		return;
+	}
+
+	auto currentTime{ std::chrono::steady_clock::now() };
+	auto elapseTime{ std::chrono::duration_cast<std::chrono::milliseconds>(currentTime - this->lastMission).count() };
+
+	if (elapseTime > 300) {
+		return;
+	}
+
+
+
+
+
+}
+
+void Client::NextMission() {
+	if (this->bMissionIncreseDecreseIndex) {
+		this->missionIndex++;
+		if (this->missionIndex > this->missionWaipoint.size() - 1) {
+			this->bMissionIncreseDecreseIndex = false;
+			this->missionIndex--;
+		}
+	}
+	else {
+		this->missionIndex--;
+		if (this->missionIndex == -1) {
+			this->bMissionIncreseDecreseIndex = true;
+			this->missionIndex++;
+		}
+	}
+}
+
 bool Client::open_handle() noexcept {
 	this->handle = OpenProcess(PROCESS_ALL_ACCESS, 0, this->PID);
 
@@ -1328,7 +1353,7 @@ Mapper::~Mapper() {
 //Memory Client 
 
 ULONG_PTR Client::getLocalPlayer() {
-	return this->LocalPlayer = this->read<ULONG_PTR>(this->BaseAddress + 0x027CE780);
+	return this->LocalPlayer = this->read<ULONG_PTR>(this->BaseAddress + 0x027D0200);
 }
 
 double Client::getHealth() {
@@ -1344,7 +1369,7 @@ int Client::getWoodInteraction() {
 }
 
 int Client::getInvValue() {
-	ULONG_PTR b0{ this->read<ULONG_PTR>(this->BaseAddress + 0x027CE7A8) };
+	/*ULONG_PTR b0{ this->read<ULONG_PTR>(this->BaseAddress + 0x027CE7A8) };
 	ULONG_PTR b1{ this->read<ULONG_PTR>(b0 + 0x80) };
 	ULONG_PTR b2{ this->read<ULONG_PTR>(b1 + 0x8) };
 	ULONG_PTR b3{ this->read<ULONG_PTR>(b2 + 0x10) };
@@ -1352,13 +1377,14 @@ int Client::getInvValue() {
 
 	ULONG_PTR b5{ this->read<ULONG_PTR>(b4 + 0x0) };
 	ULONG_PTR b6{ this->read<ULONG_PTR>(b5 + 0x28) };
-	ULONG_PTR b7{ this->read<ULONG_PTR>(b6 + 0x80) };
-	return  this->read<int>(b7);
-	//return this->read<int>(this->read<ULONG_PTR>(this->read<ULONG_PTR>(this->read<ULONG_PTR>(this->BaseAddress + 0x027CE7C8) + 0x10) + 0x0) + 0x54);
+	ULONG_PTR b7{ this->read<ULONG_PTR>(b6 + 0x80) };*/
+	//return  this->read<int>(b7);
+	return 0;
 }
 
 int Client::getAttacking() {
-	return this->read<int>(this->LocalPlayer + 0xF8);
+	//return this->read<int>(this->LocalPlayer + 0xF8);
+	return 0;
 }
 
 Vector3 Client::getPosition() {
