@@ -7,9 +7,9 @@
 #include <thread>
 
 #include <TlHelp32.h>
-#include <d3d9.h>
+//#include <d3d9.h>
 #include <d3dx9tex.h>
-#pragma comment(lib, "d3d9.lib")
+#pragma comment(lib, "d3d11.lib")
 
 
 
