@@ -98,15 +98,15 @@ void Client::move(int x, int y, int z) {
 
 	if (y > 0)
 	{
-		MyPost(this->hWnd, WM_KEYDOWN, 0x57, 0);
-		std::this_thread::sleep_for(std::chrono::milliseconds(120));
-		MyPost(this->hWnd, WM_KEYUP, 0x57, 0);
-	}
-	else if (y < 0)
-	{
 		MyPost(this->hWnd, WM_KEYDOWN, 0x53, 0);
 		std::this_thread::sleep_for(std::chrono::milliseconds(120));
 		MyPost(this->hWnd, WM_KEYUP, 0x53, 0);
+	}
+	else if (y < 0)
+	{
+		MyPost(this->hWnd, WM_KEYDOWN, 0x57, 0);
+		std::this_thread::sleep_for(std::chrono::milliseconds(120));
+		MyPost(this->hWnd, WM_KEYUP, 0x57, 0);
 	}
 }
 
