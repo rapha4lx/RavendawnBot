@@ -27,9 +27,6 @@
     <ClCompile Include="ImGui\imgui_draw.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="ImGui\imgui_impl_dx9.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="ImGui\imgui_impl_win32.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -48,15 +45,30 @@
     <ClCompile Include="Client\Client.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="UI\UI.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ImGui\imgui_impl_dx11.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="UI\Drawng.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="connection\Connection.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Protection\antiDebug\antiDebug.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Imports\json\dist\jsoncpp.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ImGui\imconfig.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="ImGui\imgui.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="ImGui\imgui_impl_dx9.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="ImGui\imgui_impl_win32.h">
@@ -1275,6 +1287,60 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="RavendawnBot.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="UI\UI.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ImGui\imgui_impl_dx11.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="UI\Drawing.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="connection\Connection.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Protection\antiDebug\antiDebug.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Protection\xorstr.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Imports\json\dist\json\json.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Imports\json\dist\json\json-forwards.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Imports\json\json\allocator.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Imports\json\json\assertions.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Imports\json\json\config.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Imports\json\json\forwards.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Imports\json\json\json.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Imports\json\json\json_features.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Imports\json\json\reader.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Imports\json\json\value.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Imports\json\json\version.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Imports\json\json\writer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

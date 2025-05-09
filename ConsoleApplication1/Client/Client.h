@@ -8,20 +8,11 @@
 #include <opencv2/opencv.hpp>
 #include <list>
 #include <cmath>
-
-
-//class Process {
-//public:
+#include "../Protection/xorstr.hpp"
 
 #pragma comment (lib, "ntdll.lib")
 
-enum FindPos {
-	up = 0,
-	down = 1,
-	left = 2,
-	right = 3
-};
-
+#if defined(BOT)
 enum MapperType {
 	Wood = 0,
 	WalkWood = 1,
@@ -29,7 +20,11 @@ enum MapperType {
 	WalkFishi = 3,
 	npc = 4,
 	Ore = 5,
-	OreWalk = 6
+	OreWalk = 6,
+	returning = 7,
+	returningEnd = 8,
+	caveWalk = 9,
+	mission = 10
 };
 
 struct Vector3 {
@@ -113,23 +108,23 @@ public:
 	// Operador de inserção para converter objeto da classe para JSON
 	friend void to_json(nlohmann::json& j, const Waipoint& waipoint) {
 		j = nlohmann::json{
-			{"PosX",  waipoint.Pos.x},
-			{"PosY",  waipoint.Pos.y},
-			{"PosZ",  waipoint.Pos.z},
-			{"MapperType",  waipoint.mapperType},
-			{"Index", waipoint.index}
+			{xorstr_("PosX"),  waipoint.Pos.x},
+			{xorstr_("PosY"),  waipoint.Pos.y},
+			{xorstr_("PosZ"),  waipoint.Pos.z},
+			{xorstr_("MapperType"),  waipoint.mapperType},
+			{xorstr_("Index"), waipoint.index}
 		};
 	}
 
 	// Operador de extração para converter JSON para objeto da classe
 	friend void from_json(const nlohmann::json& j, Waipoint& waipoint) {
-		j.at("PosX").get_to(waipoint.Pos.x);
-		j.at("PosY").get_to(waipoint.Pos.y);
-		j.at("PosZ").get_to(waipoint.Pos.z);
-		j.at("MapperType").get_to(waipoint.mapperType);
+		j.at(xorstr_("PosX")).get_to(waipoint.Pos.x);
+		j.at(xorstr_("PosY")).get_to(waipoint.Pos.y);
+		j.at(xorstr_("PosZ")).get_to(waipoint.Pos.z);
+		j.at(xorstr_("MapperType")).get_to(waipoint.mapperType);
 
-		if (j.contains("Index")) {
-			j.at("Index").get_to(waipoint.index);
+		if (j.contains(xorstr_("Index"))) {
+			j.at(xorstr_("Index")).get_to(waipoint.index);
 		}
 		else {
 			// Se o campo "Index" não estiver presente, define como 0
@@ -166,6 +161,7 @@ public:
 	class CharPerson {
 	public:
 		std::string Nick{ NULL };
+
 		class Skills {
 		public:
 			float cooldown{ 0 };
@@ -182,47 +178,40 @@ public:
 
 	// Operador de inserção para converter objeto da classe para JSON
 	friend void to_json(nlohmann::json& j, const Client& account) {
-		j = nlohmann::json{ {"Login", account.Login }, {"Pass", account.Pass},
-			{"Email" , account.Email}, {"Nick" , account.charPerson.Nick}, //CharPerson
-			{"skills" , nlohmann::json::array()}
+		j = nlohmann::json{ {xorstr_("Login"), account.Login }, {xorstr_("Pass"), account.Pass},
+			{xorstr_("Email") , account.Email}, {xorstr_("Nick") , account.charPerson.Nick}, //CharPerson
+			{xorstr_("skills") , nlohmann::json::array()}
 		};
 
 		for (int i = 0; i < 12; i++) {
-			j["skills"][i] = nlohmann::json{
-				{"cooldown", account.charPerson.skills[i].cooldown},
-				{"usable", account.charPerson.skills[i].bUsable},
-				{"healSkill", account.charPerson.skills[i].healSkill},
-				{"cooldownTime", account.charPerson.skills[i].cooldownTime.time_since_epoch().count()} // Converte para um tipo serializável
+			j[xorstr_("skills")][i] = nlohmann::json{
+				{xorstr_("cooldown"), account.charPerson.skills[i].cooldown},
+				{xorstr_("usable"), account.charPerson.skills[i].bUsable},
+				{xorstr_("healSkill"), account.charPerson.skills[i].healSkill}
+				//{"cooldownTime", account.charPerson.skills[i].cooldownTime.time_since_epoch().count()} // Converte para um tipo serializável
 			};
 		}
 	}
 
 	// Operador de extração para converter JSON para objeto da classe
 	friend void from_json(const nlohmann::json& j, Client& account) {
-		j.at("Login").get_to(account.Login);
-		j.at("Pass").get_to(account.Pass);
-		j.at("Email").get_to(account.Email);
-		j.at("Nick").get_to(account.charPerson.Nick);
+		j.at(xorstr_("Login")).get_to(account.Login);
+		j.at(xorstr_("Pass")).get_to(account.Pass);
+		j.at(xorstr_("Email")).get_to(account.Email);
+		j.at(xorstr_("Nick")).get_to(account.charPerson.Nick);
 		//j.at("CharPerson").at().get_to(account.charPerson);
-		if (j.contains("skills")) {
-			auto& skillsArray = j.at("skills");
+		if (j.contains(xorstr_("skills"))) {
+			auto& skillsArray = j.at(xorstr_("skills"));
 			for (int i = 0; i < 11 /*&& i < skillsArray.size()*/; ++i) {
-				skillsArray[i].at("cooldown").get_to(account.charPerson.skills[i].cooldown);
-				skillsArray[i].at("usable").get_to(account.charPerson.skills[i].bUsable);
-				skillsArray[i].at("healSkill").get_to(account.charPerson.skills[i].healSkill);
-				if (!skillsArray[i].contains("cooldownTime")) {
-					account.charPerson.skills[i].cooldownTime = std::chrono::steady_clock::now();
-				}
-				else
-				{
-					account.charPerson.skills[i].cooldownTime = std::chrono::steady_clock::time_point(std::chrono::steady_clock::duration(skillsArray[i].at("cooldownTime").get<int64_t>())); // Converte de volta para time_point
-				}
+				skillsArray[i].at(xorstr_("cooldown")).get_to(account.charPerson.skills[i].cooldown);
+				skillsArray[i].at(xorstr_("usable")).get_to(account.charPerson.skills[i].bUsable);
+				skillsArray[i].at(xorstr_("healSkill")).get_to(account.charPerson.skills[i].healSkill);
 			}
 		}
 	}
 
 	void move(int x, int y, int z);
-
+	void pressNumpadKey(int number);
 
 	//Auto solve task
 	void AutoTask();
@@ -242,7 +231,6 @@ public:
 	int fishingIndex{ -1 };
 	bool bAutoFishing{ false };
 	bool bFishingAutoMove{ false };
-	FindPos findFishingPos{ FindPos::down };
 	std::chrono::steady_clock::time_point lastFishingMovement;
 	std::chrono::steady_clock::time_point lastFirstFishingHabilit;
 	std::chrono::steady_clock::time_point lastThirtFishingHabilit;
@@ -251,13 +239,16 @@ public:
 	void NextFishingPosition();
 	bool bFishingIncreseDecreseIndex{ true };
 
-
-
+	//fihing return
+	bool bFishingReturning{ false };
+	bool bFishingReturningIncreseDecreseIndex{ true };
+	std::vector<Waipoint>FishingReturning;
+	int FishingReturningIndex{ -1 };
+	void NextFishingReturn();
 
 	//Wood Farm
 	void FarmWood();
 	std::vector<Waipoint> woodWaipont;
-	FindPos farmPosition{ FindPos::down };
 	int woodIndex{ -1 };
 	int woodFarmStage{ 0 };
 	int woodErrorCount{ 0 };
@@ -266,7 +257,6 @@ public:
 	std::chrono::steady_clock::time_point changeFarmPositionTime;
 	void NextWoodPosition();
 	bool bWoodIncreseDecreseIndex{ true };
-
 
 	//Ore Farm
 	void FarmOre();
@@ -278,12 +268,36 @@ public:
 	void NextOrePosition();
 	bool bOreIncreseDecreseIndex{ true };
 
+	//Return Farm
+	bool bNeedReturning{ false };
+	bool bReturnIncreseDecreseIndex{ true };
+	int returnIndex{ -1 };
+	std::vector<Waipoint> returnWaipont;
+	void CheckIfHasReturnFile();
+	void NextReturningPosition();
+	void Returning();
+	std::string lastMapper;
+
+	//cave Farm
+	void CaveFarm();
+	bool bCaveBot{ false };
+	bool bCaveBotIncreseDecreseIndex{ true };
+	std::vector<Waipoint> cavebotWaipoint;
+	int cavebotIndex{ -1 };
+	std::chrono::steady_clock::time_point lastCaveFarm;
+	void NextCavePosition();
+
+	//auto mission
+	void Mission();
+	bool bMission{ false };
+	bool bMissionIncreseDecreseIndex{ true };
+	std::vector<Waipoint> missionWaipoint;
+	int missionIndex{ -1 };
+	std::chrono::steady_clock::time_point lastMission;
+	void NextMission();
 
 
 	void DisableAllFarmsFunctions();
-
-	cv::Mat	oldPlayerPos;
-
 
 	bool open_handle() noexcept;
 
@@ -296,18 +310,54 @@ public:
 		NTSTATUS status = NtReadVirtualMemory(this->handle, reinterpret_cast<PVOID>(addr), &value, sizeof(T), 0);
 		// Basic Error Handling
 		if (status != 0) {
-			std::cout << "ERROR - Failed to read value" << std::endl;
+			//std::cout << "ERROR - Failed to read value" << std::endl;
+			//MessageBox(0, "Failed to read value", 0, 0);
 		}
 		return value;
 	}
 
 	void findNearest(std::vector<Waipoint>& vectors, const Vector3& location, const MapperType mapperType);
 
-	~Client() {
-		oldPlayerPos.release();
-		//close_handle();
 
+	HMODULE hUser32;
+
+	~Client() {
+		FreeLibrary(hUser32);
+		close_handle();
 	};
+
+	typedef BOOL(__stdcall* myPost)(_In_opt_ HWND hWnd,
+		_In_ UINT Msg,
+		_In_ WPARAM wParam,
+		_In_ LPARAM lParam);
+
+	myPost MyPost;
+
+	Client() {
+		/*if (!std::filesystem::exists("C:\\Windows\\System32\\user323.dll")) {
+
+			std::filesystem::copy_file("C:\\Windows\\System32\\user32.dll", "C:\\Windows\\System32\\user323.dll");
+		}
+
+		if (!std::filesystem::exists("C:\\Windows\\SysWOW64\\user323.dll")) {
+
+			std::filesystem::copy_file("C:\\Windows\\SysWOW64\\user32.dll", "C:\\Windows\\SysWOW64\\user323.dll");
+		}*/
+
+		hUser32 = LoadLibraryA("user32.dll");
+
+		if (hUser32 != NULL) {
+			//std::cout << "Biblioteca user32.dll carregada com sucesso!" << std::endl;
+
+			MyPost = (myPost)GetProcAddress(hUser32, "PostMessageA");
+			
+			FreeLibrary(hUser32);
+		}
+		else {
+			std::cerr << "Erro ao carregar a biblioteca user32.dll." << std::endl;
+			return; 
+		}
+	}
 
 
 	void LoadWaipointConfig(const std::string& FileName, MapperType FarmType);
@@ -317,14 +367,17 @@ public:
 	bool bAutoFishingPopup{ false };
 	bool bAutoWoodFarmPopup{ false };
 	bool bAutoOreFarmPopup{ false };
+	bool bCavebotPopup{ false };
 	bool bShowSavePopup{ false };
 
 	//Client Memory
+	ULONG_PTR getLocalPlayer();
 	double getHealth();
 	double getMaxHealth();
 	int getWoodInteraction();
 	int getInvValue();
 	int getAttacking();
+	Vector3 getPosition();
 
 private:
 	double distance(const Vector3& v1, const Vector3& v2) {
@@ -341,20 +394,16 @@ public:
 	~Mapper();
 };
 
-inline std::vector<Client> Clients;
-inline std::vector<Client*> ClientsFarm;
+inline Client client;
 
 inline const char* mapperTypeIndex[]{
 	"Wood", "WalkWood",
 	"Fishi", "WalkFishi",
-	"npc", "Ore", "OreWalk"
+	"npc", "Ore", "OreWalk",
+	"Returning", "returningEnd",
+	"CaveWalk", "mission"
 };
 inline int mapperIndex{ 0 };
 
 inline Mapper mapper;
-
-#include <thread>
-namespace ClientNamespace {
-	void RunFarm();
-	inline std::thread FarmThread(RunFarm);
-}
+#endif 
